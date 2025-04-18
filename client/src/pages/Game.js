@@ -6,6 +6,8 @@ const Game = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   
+  // Add level information state
+  const [levelInfo, setLevelInfo] = useState(null);
   const [session, setSession] = useState(null);
   const [problems, setProblems] = useState([]);
   const [currentProblemIndex, setCurrentProblemIndex] = useState(0);
@@ -15,6 +17,7 @@ const Game = () => {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [levelUpAnimation, setLevelUpAnimation] = useState(false);
 
   // Start game session when component mounts
   useEffect(() => {
@@ -52,6 +55,7 @@ const Game = () => {
         
         const problemsData = await problemsResponse.json();
         setProblems(problemsData.problems);
+        setLevelInfo(problemsData.levelInfo);
         setLoading(false);
       } catch (error) {
         console.error('Game initialization error:', error);
@@ -65,6 +69,35 @@ const Game = () => {
 
   const handleAnswerSelect = (answer) => {
     setSelectedAnswer(answer);
+  };
+
+  // Define the endGame function
+  const endGame = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('http://localhost:5000/api/game/end', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionId: session.session_id
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to end game session');
+      }
+      
+      const data = await response.json();
+      setSummary(data.summary);
+      setGameOver(true);
+    } catch (error) {
+      console.error('End game error:', error);
+      setError('Failed to end the game. Please try again.');
+    }
   };
 
   const handleSubmitAnswer = async () => {
@@ -94,6 +127,14 @@ const Game = () => {
       const data = await response.json();
       setResult(data);
       
+      // Show level up animation if user leveled up
+      if (data.leveledUp) {
+        setLevelUpAnimation(true);
+        setTimeout(() => {
+          setLevelUpAnimation(false);
+        }, 3000);
+      }
+      
       // Show result for 2 seconds then move to next problem
       setTimeout(() => {
         setResult(null);
@@ -104,38 +145,10 @@ const Game = () => {
         } else {
           endGame();
         }
-      }, 2000);
+      }, data.leveledUp ? 4000 : 2000); // Wait longer if level up animation is showing
     } catch (error) {
       console.error('Submit answer error:', error);
       setError('Failed to submit your answer. Please try again.');
-    }
-  };
-
-  const endGame = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      const response = await fetch('http://localhost:5000/api/game/end', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          sessionId: session.session_id
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to end game session');
-      }
-      
-      const data = await response.json();
-      setSummary(data.summary);
-      setGameOver(true);
-    } catch (error) {
-      console.error('End game error:', error);
-      setError('Failed to end the game. Please try again.');
     }
   };
 
@@ -156,7 +169,7 @@ const Game = () => {
     );
   }
 
-  if (gameOver) {
+  if (gameOver && summary) {
     return (
       <div className="game-over-container">
         <h2>Game Complete!</h2>
@@ -173,49 +186,65 @@ const Game = () => {
     );
   }
 
+  // Get the current problem
   const currentProblem = problems[currentProblemIndex];
 
   return (
     <div className="game-container">
       <div className="game-header">
         <h2>Math Adventure</h2>
+        {levelInfo && (
+          <div className="level-info">
+            <span className="level-name">{levelInfo.level_name}</span>
+            <p className="level-description">{levelInfo.description}</p>
+          </div>
+        )}
         <div className="progress-indicator">
           Problem {currentProblemIndex + 1} of {problems.length}
         </div>
       </div>
 
-      <div className="problem-card">
-        <h3 className="problem-category">{currentProblem.category}</h3>
-        <p className="problem-question">{currentProblem.question}</p>
-        
-        <div className="options-container">
-          {currentProblem.options.map((option, index) => (
-            <button
-              key={index}
-              className={`option-btn ${selectedAnswer === option ? 'selected' : ''}`}
-              onClick={() => handleAnswerSelect(option)}
-            >
-              {option}
-            </button>
-          ))}
+      {levelUpAnimation && (
+        <div className="level-up-animation">
+          <h2>Level Up!</h2>
+          <p>Congratulations! You've reached {result?.newLevel?.name}!</p>
         </div>
-        
-        {result && (
-          <div className={`result-feedback ${result.correct ? 'correct' : 'incorrect'}`}>
-            {result.correct 
-              ? `Correct! +${result.pointsEarned} points` 
-              : `Incorrect. The correct answer is ${result.correctAnswer}`}
+      )}
+
+      {currentProblem && (
+        <div className="problem-card">
+          <h3 className="problem-category">{currentProblem.category}</h3>
+          <p className="problem-question">{currentProblem.question}</p>
+          
+          <div className="options-container">
+            {currentProblem.options.map((option, index) => (
+              <button
+                key={index}
+                className={`option-btn ${selectedAnswer === option ? 'selected' : ''}`}
+                onClick={() => handleAnswerSelect(option)}
+              >
+                {option}
+              </button>
+            ))}
           </div>
-        )}
-        
-        <button 
-          className="submit-btn"
-          disabled={!selectedAnswer || result !== null}
-          onClick={handleSubmitAnswer}
-        >
-          Submit Answer
-        </button>
-      </div>
+          
+          {result && (
+            <div className={`result-feedback ${result.correct ? 'correct' : 'incorrect'}`}>
+              {result.correct 
+                ? `Correct! +${result.pointsEarned} points` 
+                : `Incorrect. The correct answer is ${result.correctAnswer}`}
+            </div>
+          )}
+          
+          <button 
+            className="submit-btn"
+            disabled={!selectedAnswer || result !== null}
+            onClick={handleSubmitAnswer}
+          >
+            Submit Answer
+          </button>
+        </div>
+      )}
     </div>
   );
 };

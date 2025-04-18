@@ -303,3 +303,60 @@ button:disabled {
     flex-direction: column;
   }
 }
+
+/* Level styling */
+.level-info {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.level-name {
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #4CAF50;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.level-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+}
+
+/* Level up animation */
+.level-up-animation {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(76, 175, 80, 0.9);
+  color: white;
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  animation: fadeInOut 3s ease-in-out;
+  z-index: 100;
+  box-shadow: 0 0 30px rgba(76, 175, 80, 0.6);
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  30% { transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.level-up-animation h2 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.level-up-animation p {
+  font-size: 1.2rem;
+}
