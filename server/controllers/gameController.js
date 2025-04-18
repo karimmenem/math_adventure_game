@@ -27,59 +27,79 @@ const gameController = {
   
   // Get problems based on user level
   // Update the getProblems method in gameController.js
-async getProblems(req, res) {
-  try {
-    const userId = req.user.userId;
-    
-    // Get user's current level and points
-    const userQuery = 'SELECT current_level, total_points FROM user_progress WHERE user_id = $1';
-    const userResult = await pool.query(userQuery, [userId]);
-    
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ message: 'User progress not found' });
+  async getProblems(req, res) {
+    try {
+      const userId = req.user.userId;
+      
+      // Get user's current level and points
+      const userQuery = 'SELECT current_level, total_points FROM user_progress WHERE user_id = $1';
+      const userResult = await pool.query(userQuery, [userId]);
+      
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ message: 'User progress not found' });
+      }
+      
+      const userProgress = userResult.rows[0];
+      
+      // Get level information based on user's points
+      const levelQuery = `
+        SELECT level_id, level_name, description, category, max_difficulty 
+        FROM levels 
+        WHERE required_points <= $1 
+        ORDER BY required_points DESC 
+        LIMIT 1
+      `;
+      const levelResult = await pool.query(levelQuery, [userProgress.total_points]);
+      
+      if (levelResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Level information not found' });
+      }
+      
+      const levelInfo = levelResult.rows[0];
+      
+      // Get problems appropriate for this level
+      // Enhanced to ensure better randomization
+      const problemsQuery = `
+        SELECT problem_id, category, difficulty_level, question, options, points
+        FROM problems
+        WHERE category = $1 AND difficulty_level <= $2
+        ORDER BY RANDOM()  -- This ensures proper randomization
+        LIMIT 5
+      `;
+      const problemsResult = await pool.query(problemsQuery, [
+        levelInfo.category, 
+        levelInfo.max_difficulty
+      ]);
+      
+      // If we don't have enough problems of the exact category, supplement with others
+      if (problemsResult.rows.length < 5) {
+        const supplementalQuery = `
+          SELECT problem_id, category, difficulty_level, question, options, points
+          FROM problems
+          WHERE category != $1 AND difficulty_level <= $2
+          ORDER BY RANDOM()
+          LIMIT $3
+        `;
+        const supplementalResult = await pool.query(supplementalQuery, [
+          levelInfo.category,
+          levelInfo.max_difficulty,
+          5 - problemsResult.rows.length
+        ]);
+        
+        // Combine the results
+        problemsResult.rows = [...problemsResult.rows, ...supplementalResult.rows];
+      }
+      
+      res.json({
+        currentLevel: userProgress.current_level,
+        levelInfo: levelInfo,
+        problems: problemsResult.rows
+      });
+    } catch (error) {
+      console.error('Get problems error:', error);
+      res.status(500).json({ message: 'Server error when fetching problems' });
     }
-    
-    const userProgress = userResult.rows[0];
-    
-    // Get level information based on user's points
-    const levelQuery = `
-      SELECT level_id, level_name, description, category, max_difficulty 
-      FROM levels 
-      WHERE required_points <= $1 
-      ORDER BY required_points DESC 
-      LIMIT 1
-    `;
-    const levelResult = await pool.query(levelQuery, [userProgress.total_points]);
-    
-    if (levelResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Level information not found' });
-    }
-    
-    const levelInfo = levelResult.rows[0];
-    
-    // Get problems appropriate for this level
-    const problemsQuery = `
-      SELECT problem_id, category, difficulty_level, question, options, points
-      FROM problems
-      WHERE category = $1 AND difficulty_level <= $2
-      ORDER BY RANDOM()
-      LIMIT 5
-    `;
-    const problemsResult = await pool.query(problemsQuery, [
-      levelInfo.category, 
-      levelInfo.max_difficulty
-    ]);
-    
-    res.json({
-      currentLevel: userProgress.current_level,
-      levelInfo: levelInfo,
-      problems: problemsResult.rows
-    });
-  } catch (error) {
-    console.error('Get problems error:', error);
-    res.status(500).json({ message: 'Server error when fetching problems' });
-  }
-},
+  },
   
   // Submit answer and update progress
   // Update the submitAnswer method in gameController.js

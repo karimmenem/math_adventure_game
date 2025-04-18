@@ -8,9 +8,10 @@ import {
 import { AuthProvider } from "./context/AuthContext";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
-import Dashboard from "./pages/Dashboard"; // You'll need to create this
-import Home from "./pages/Home"; // You'll need to create this
+import Dashboard from "./pages/Dashboard";
+import Home from "./pages/Home";
 import Game from "./pages/Game";
+import Achievements from "./pages/Achievements";
 import "./App.css";
 
 // Protected Route component
@@ -41,6 +42,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Game />
+                </ProtectedRoute>
+              }
+            />
+            {/* Move this route inside the Routes component */}
+            <Route
+              path="/achievements"
+              element={
+                <ProtectedRoute>
+                  <Achievements />
                 </ProtectedRoute>
               }
             />

@@ -81,9 +81,9 @@ const Dashboard = () => {
               <Link to="/game" className="start-game-btn">
                 Start New Game
               </Link>
-              <button className="view-achievements-btn">
+              <Link to="/achievements" className="view-achievements-btn">
                 View Achievements
-              </button>
+              </Link>
             </div>
           </>
         )}

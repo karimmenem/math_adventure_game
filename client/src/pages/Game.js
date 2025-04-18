@@ -7,6 +7,8 @@ const Game = () => {
   const navigate = useNavigate();
   
   // Add level information state
+  const [newAchievements, setNewAchievements] = useState([]);
+  const [showAchievementNotification, setShowAchievementNotification] = useState(false);
   const [levelInfo, setLevelInfo] = useState(null);
   const [session, setSession] = useState(null);
   const [problems, setProblems] = useState([]);
@@ -94,9 +96,43 @@ const Game = () => {
       const data = await response.json();
       setSummary(data.summary);
       setGameOver(true);
+      checkAchievements();
     } catch (error) {
       console.error('End game error:', error);
       setError('Failed to end the game. Please try again.');
+    }
+  };
+  
+  const checkAchievements = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('http://localhost:5000/api/achievements/check', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to check achievements');
+      }
+      
+      const data = await response.json();
+      
+      // Show achievement notification if user earned a new achievement
+      if (data.hasNewAchievements) {
+        setNewAchievements(data.newAchievements);
+        setShowAchievementNotification(true);
+        
+        // Hide notification after 5 seconds
+        setTimeout(() => {
+          setShowAchievementNotification(false);
+        }, 5000);
+      }
+    } catch (error) {
+      console.error('Achievement check error:', error);
     }
   };
 
@@ -191,6 +227,18 @@ const Game = () => {
 
   return (
     <div className="game-container">
+      {showAchievementNotification && (
+        <div className="achievement-notification">
+          <h3>Achievement Unlocked!</h3>
+          {newAchievements.map(achievement => (
+            <div key={achievement.achievement_id} className="new-achievement">
+              <p>{achievement.name}</p>
+              <p className="achievement-desc">{achievement.description}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="game-header">
         <h2>Math Adventure</h2>
         {levelInfo && (

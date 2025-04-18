@@ -5,6 +5,7 @@ const pool = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const gameRoutes = require('./routes/gameRoutes');
+const achievementRoutes = require('./routes/achievementRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/game', gameRoutes);
+app.use('/api/achievements', achievementRoutes);
 
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
