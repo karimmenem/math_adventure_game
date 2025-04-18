@@ -1,27 +1,41 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import React, { useContext, useEffect, useState } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 const Dashboard = () => {
   const { user, logout } = useContext(AuthContext);
   const [userProgress, setUserProgress] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    // Simulate fetching user progress data
-    // In a real app, you'd make an API call to your backend
     const fetchUserProgress = async () => {
       try {
-        // Mock data - replace with actual API call
-        setTimeout(() => {
-          setUserProgress({
-            current_level: 3,
-            total_points: 250,
-            problems_solved: 15
-          });
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("Authentication token not found");
           setLoading(false);
-        }, 1000);
+          return;
+        }
+
+        const response = await fetch(
+          "http://localhost:5000/api/users/progress",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user progress");
+        }
+
+        const data = await response.json();
+        setUserProgress(data);
+        setLoading(false);
       } catch (error) {
-        console.error('Error fetching user progress:', error);
+        console.error("Error fetching user progress:", error);
+        setError("Failed to load your progress. Please try again later.");
         setLoading(false);
       }
     };
@@ -41,6 +55,8 @@ const Dashboard = () => {
       <div className="dashboard-content">
         {loading ? (
           <p>Loading your progress...</p>
+        ) : error ? (
+          <p className="error-message">{error}</p>
         ) : (
           <>
             <div className="user-stats">
@@ -48,12 +64,12 @@ const Dashboard = () => {
                 <h3>Current Level</h3>
                 <p className="stat-value">{userProgress?.current_level}</p>
               </div>
-              
+
               <div className="stat-card">
                 <h3>Total Points</h3>
                 <p className="stat-value">{userProgress?.total_points}</p>
               </div>
-              
+
               <div className="stat-card">
                 <h3>Problems Solved</h3>
                 <p className="stat-value">{userProgress?.problems_solved}</p>
@@ -61,9 +77,9 @@ const Dashboard = () => {
             </div>
 
             <div className="action-buttons">
-              <button className="start-game-btn">
+              <Link to="/game" className="start-game-btn">
                 Start New Game
-              </button>
+              </Link>
               <button className="view-achievements-btn">
                 View Achievements
               </button>
