@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import Header from "./components/common/Header";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
@@ -25,36 +26,41 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="App">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/game"
-              element={
-                <ProtectedRoute>
-                  <Game />
-                </ProtectedRoute>
-              }
-            />
-            {/* Move this route inside the Routes component */}
-            <Route
-              path="/achievements"
-              element={
-                <ProtectedRoute>
-                  <Achievements />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
+          <Header />
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/game"
+                element={
+                  <ProtectedRoute>
+                    <Game />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/achievements"
+                element={
+                  <ProtectedRoute>
+                    <Achievements />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </main>
+          <footer className="app-footer">
+            <p>© {new Date().getFullYear()} Math Adventure Game</p>
+          </footer>
         </div>
       </Router>
     </AuthProvider>
