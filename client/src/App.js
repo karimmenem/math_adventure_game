@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Game from "./pages/Game";
 import Achievements from "./pages/Achievements";
+import Profile from "./pages/Profile"; // Add this import
 import soundService from "./services/soundService";
 import "./App.css";
 
@@ -59,6 +60,15 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Achievements />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Add the Profile route */}
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
                   </ProtectedRoute>
                 }
               />

@@ -1,6 +1,8 @@
+// client/src/pages/Dashboard.js
 import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import GameModeSelector from '../components/game/GameModeSelector';
 import soundService from '../services/soundService';
 
 const Dashboard = () => {
@@ -8,6 +10,7 @@ const Dashboard = () => {
   const [userProgress, setUserProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showGameModeSelector, setShowGameModeSelector] = useState(false);
 
   useEffect(() => {
     const fetchUserProgress = async () => {
@@ -50,8 +53,14 @@ const Dashboard = () => {
     logout();
   };
   
-  const handleStartGame = () => {
+  const handleStartGameClick = () => {
     soundService.play('click');
+    setShowGameModeSelector(true);
+  };
+  
+  const handleCloseGameModeSelector = () => {
+    soundService.play('click');
+    setShowGameModeSelector(false);
   };
   
   const handleViewAchievements = () => {
@@ -60,6 +69,10 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
+      {showGameModeSelector && (
+        <GameModeSelector onClose={handleCloseGameModeSelector} />
+      )}
+      
       <header className="dashboard-header">
         <h1>Welcome, {user?.username}!</h1>
         <button onClick={handleLogout} className="logout-btn">
@@ -92,9 +105,9 @@ const Dashboard = () => {
             </div>
 
             <div className="action-buttons">
-              <Link to="/game" className="start-game-btn" onClick={handleStartGame}>
+              <button onClick={handleStartGameClick} className="start-game-btn">
                 Start New Game
-              </Link>
+              </button>
               <Link to="/achievements" className="view-achievements-btn" onClick={handleViewAchievements}>
                 View Achievements
               </Link>

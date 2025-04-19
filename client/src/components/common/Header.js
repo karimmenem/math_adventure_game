@@ -4,7 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 import SoundToggle from './SoundToggle';
 
 const Header = () => {
-  const { isAuthenticated, logout } = useContext(AuthContext);
+  const { isAuthenticated, user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -12,6 +12,9 @@ const Header = () => {
     navigate('/signin');
   };
 
+  // Default avatar path
+  // Default avatar path
+const avatarPath = user?.avatar ? `/avatars/${user.avatar}.png` : '/avatars/default.png';
   return (
     <header className="app-header">
       <div className="header-container">
@@ -29,6 +32,20 @@ const Header = () => {
             <nav className="nav-menu">
               <Link to="/dashboard" className="nav-link">Dashboard</Link>
               <Link to="/achievements" className="nav-link">Achievements</Link>
+              <Link to="/profile" className="nav-link profile-link">
+                <span className="profile-username" style={{ color: user?.usernameColor || '#4CAF50' }}>
+                  {user?.username}
+                </span>
+                <div className="header-avatar">
+                  <img 
+                    src={avatarPath} 
+                    alt="User avatar" 
+                    onError={(e) => {
+                      e.target.src = '/avatars/avatar1.png';
+                    }}
+                  />
+                </div>
+              </Link>
               <button onClick={handleLogout} className="nav-button">Logout</button>
             </nav>
           ) : (

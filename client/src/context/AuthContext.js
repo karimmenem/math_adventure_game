@@ -31,16 +31,18 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout user
-  // Update the logout function in AuthContext.js
-const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  setUser(null);
-  setIsAuthenticated(false);
-  
-  // Add navigation to sign-in
-  window.location.href = '/signin';  // This forces a page reload to /signin
-};
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    setIsAuthenticated(false);
+  };
+
+  // Update user profile data
+  const updateUser = (userData) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+  };
 
   return (
     <AuthContext.Provider
@@ -49,7 +51,8 @@ const logout = () => {
         isAuthenticated,
         loading,
         login,
-        logout
+        logout,
+        updateUser
       }}
     >
       {children}

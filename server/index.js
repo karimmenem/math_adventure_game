@@ -5,6 +5,7 @@ const pool = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const gameRoutes = require('./routes/gameRoutes');
+const profileRoutes = require('./routes/profileRoutes');
 const achievementRoutes = require('./routes/achievementRoutes');
 
 // Load environment variables
@@ -19,6 +20,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/achievements', achievementRoutes);
+app.use('/api/users/profile', profileRoutes);
 
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
