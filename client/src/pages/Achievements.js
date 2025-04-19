@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import soundService from '../services/soundService';
 
 const Achievements = () => {
   const [userAchievements, setUserAchievements] = useState([]);
@@ -80,12 +81,16 @@ const Achievements = () => {
     if (name.includes('Thinker')) return '🧠';
     return '🏅'; // Default fallback
   };
+  
+  const handleBackClick = () => {
+    soundService.play('click');
+  };
 
   return (
     <div className="achievements-container">
       <header className="achievements-header">
         <h1>My Achievements</h1>
-        <Link to="/dashboard" className="back-btn">
+        <Link to="/dashboard" className="back-btn" onClick={handleBackClick}>
           Back to Dashboard
         </Link>
       </header>

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import soundService from '../services/soundService';
 
 const Game = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   
-  // Add level information state
+  // State variables
   const [newAchievements, setNewAchievements] = useState([]);
   const [showAchievementNotification, setShowAchievementNotification] = useState(false);
   const [levelInfo, setLevelInfo] = useState(null);
@@ -59,6 +60,9 @@ const Game = () => {
         setProblems(problemsData.problems);
         setLevelInfo(problemsData.levelInfo);
         setLoading(false);
+        
+        // Play game start sound
+        soundService.play('gameStart');
       } catch (error) {
         console.error('Game initialization error:', error);
         setError('Failed to start the game. Please try again.');
@@ -70,6 +74,7 @@ const Game = () => {
   }, []);
 
   const handleAnswerSelect = (answer) => {
+    soundService.play('click');
     setSelectedAnswer(answer);
   };
 
@@ -96,13 +101,14 @@ const Game = () => {
       const data = await response.json();
       setSummary(data.summary);
       setGameOver(true);
+      soundService.play('gameEnd');
       checkAchievements();
     } catch (error) {
       console.error('End game error:', error);
       setError('Failed to end the game. Please try again.');
     }
   };
-  
+
   const checkAchievements = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -125,6 +131,7 @@ const Game = () => {
       if (data.hasNewAchievements) {
         setNewAchievements(data.newAchievements);
         setShowAchievementNotification(true);
+        soundService.play('achievement');
         
         // Hide notification after 5 seconds
         setTimeout(() => {
@@ -163,9 +170,17 @@ const Game = () => {
       const data = await response.json();
       setResult(data);
       
+      // Play appropriate sound based on whether answer is correct
+      if (data.correct) {
+        soundService.play('correct');
+      } else {
+        soundService.play('incorrect');
+      }
+      
       // Show level up animation if user leveled up
       if (data.leveledUp) {
         setLevelUpAnimation(true);
+        soundService.play('levelUp');
         setTimeout(() => {
           setLevelUpAnimation(false);
         }, 3000);
@@ -189,6 +204,7 @@ const Game = () => {
   };
 
   const returnToDashboard = () => {
+    soundService.play('click');
     navigate('/dashboard');
   };
 

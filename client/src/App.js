@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Game from "./pages/Game";
 import Achievements from "./pages/Achievements";
+import soundService from "./services/soundService";
 import "./App.css";
 
 // Protected Route component
@@ -22,6 +23,11 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function App() {
+  useEffect(() => {
+    // Preload all sounds when app loads
+    soundService.preloadSounds();
+  }, []);
+
   return (
     <AuthProvider>
       <Router>

@@ -198,9 +198,8 @@ button:disabled {
 }
 
 .features-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+  padding-top: 2rem; /* Reduced top padding */
+  position: relative;
 }
 
 .feature {
@@ -857,18 +856,19 @@ body {
 }
 
 .section-title {
-  text-align: center;
-  font-size: 2.2rem;
-  margin-bottom: 3rem;
+  display: inline-block;
   color: var(--primary-dark);
+  font-size: 2.2rem;
+  margin: 0;
+  position: relative;
 }
 
 .features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  padding: 0 2rem;
+  position: relative;
+  z-index: 1;
+  margin-top: 1rem; /* Adds a bit of space after the title */
 }
+
 
 .feature-card {
   text-align: center;
@@ -877,6 +877,10 @@ body {
   background-color: white;
   box-shadow: var(--shadow-sm);
   transition: all 0.3s;
+  border-top: 5px solid var(--primary-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .feature-card:hover {
@@ -885,18 +889,31 @@ body {
 }
 
 .feature-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  background-color: #f8f8f8;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -3.5rem;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 1;
 }
 
 .feature-card h3 {
   color: var(--primary-dark);
   margin-bottom: 1rem;
+  font-size: 1.4rem;
 }
 
 .feature-card p {
   color: var(--text-medium);
   line-height: 1.6;
+  font-size: 1.1rem;
 }
 
 .cta-section {
@@ -982,7 +999,15 @@ body {
   }
   
   .section-title {
-    font-size: 1.8rem;
+    text-align: center;
+    font-size: 2.2rem;
+    margin-bottom: 3rem;
+    color: var(--primary-dark);
+    width: 100%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    position: static; /* Remove any positioning */
   }
   
   .cta-section h2 {
@@ -1619,4 +1644,95 @@ body {
 @keyframes subtle-pulse {
   from { transform: scale(1); }
   to { transform: scale(1.05); }
+}
+
+.sound-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: all 0.3s;
+}
+
+.sound-toggle-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.features-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--primary-light);
+  border-radius: 3px;
+}
+
+.feature-card:nth-child(1) {
+  border-top-color: var(--primary-color);
+}
+
+.feature-card:nth-child(2) {
+  border-top-color: var(--secondary-color);
+}
+
+.feature-card:nth-child(3) {
+  border-top-color: var(--accent-color);
+}
+
+.feature-card:nth-child(4) {
+  border-top-color: var(--success-color);
+}
+
+.feature-card:nth-child(1) .feature-icon {
+  background-color: #E8F5E9;
+}
+
+.feature-card:nth-child(2) .feature-icon {
+  background-color: #FFF8E1;
+}
+
+.feature-card:nth-child(3) .feature-icon {
+  background-color: #E3F2FD;
+}
+
+.feature-card:nth-child(4) .feature-icon {
+  background-color: #FBE9E7;
+}
+
+.features-section .container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.title-container {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 6rem; /* Significantly increased to make room for content below */
+  padding-top: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.feature-card {
+  margin-top: 1rem;
 }

@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import SoundToggle from './SoundToggle';
 
 const Header = () => {
   const { isAuthenticated, logout } = useContext(AuthContext);
@@ -21,18 +22,22 @@ const Header = () => {
           </h1>
         </div>
         
-        {isAuthenticated ? (
-          <nav className="nav-menu">
-            <Link to="/dashboard" className="nav-link">Dashboard</Link>
-            <Link to="/achievements" className="nav-link">Achievements</Link>
-            <button onClick={handleLogout} className="nav-button">Logout</button>
-          </nav>
-        ) : (
-          <nav className="nav-menu">
-            <Link to="/signin" className="nav-link">Sign In</Link>
-            <Link to="/signup" className="nav-button">Sign Up</Link>
-          </nav>
-        )}
+        <div className="nav-container">
+          <SoundToggle />
+          
+          {isAuthenticated ? (
+            <nav className="nav-menu">
+              <Link to="/dashboard" className="nav-link">Dashboard</Link>
+              <Link to="/achievements" className="nav-link">Achievements</Link>
+              <button onClick={handleLogout} className="nav-button">Logout</button>
+            </nav>
+          ) : (
+            <nav className="nav-menu">
+              <Link to="/signin" className="nav-link">Sign In</Link>
+              <Link to="/signup" className="nav-button">Sign Up</Link>
+            </nav>
+          )}
+        </div>
       </div>
       <div className="header-decoration"></div>
     </header>
