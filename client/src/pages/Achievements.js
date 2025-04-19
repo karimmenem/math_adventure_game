@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import soundService from '../services/soundService';
+import animationUtils from '../utils/animationUtils';
 
 const Achievements = () => {
   const [userAchievements, setUserAchievements] = useState([]);
   const [allAchievements, setAllAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [animatedAchievements, setAnimatedAchievements] = useState(new Set());
 
   useEffect(() => {
     const fetchAchievements = async () => {
@@ -85,7 +87,71 @@ const Achievements = () => {
   const handleBackClick = () => {
     soundService.play('click');
   };
-
+  
+  // Handle card click to play animations for earned achievements
+  const handleAchievementClick = (achievement) => {
+    if (hasEarned(achievement.achievement_id) && !animatedAchievements.has(achievement.achievement_id)) {
+      // Add to set of already animated achievements to prevent replaying
+      setAnimatedAchievements(prev => new Set([...prev, achievement.achievement_id]));
+      
+      // Play celebration effect
+      soundService.play('achievement');
+      
+      // Get card element by ID
+      const card = document.getElementById(`achievement-${achievement.achievement_id}`);
+      if (card) {
+        // Create a small celebration effect over the card
+        const rect = card.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        // Create stars or sparkles
+        for (let i = 0; i < 20; i++) {
+          const star = document.createElement('div');
+          star.className = 'achievement-star';
+          star.innerHTML = '⭐'; // Use star emoji
+          star.style.position = 'fixed';
+          star.style.left = `${centerX}px`;
+          star.style.top = `${centerY}px`;
+          star.style.fontSize = `${10 + Math.random() * 15}px`;
+          star.style.pointerEvents = 'none';
+          star.style.zIndex = '1000';
+          star.style.opacity = '1';
+          document.body.appendChild(star);
+          
+          // Random angle and distance
+          const angle = Math.random() * Math.PI * 2;
+          const distance = 30 + Math.random() * 50;
+          
+          // Animate
+          star.animate([
+            {
+              transform: 'translate(-50%, -50%) scale(0.5)',
+              opacity: 0
+            },
+            {
+              transform: 'translate(-50%, -50%) scale(1.5)',
+              opacity: 1,
+              offset: 0.2
+            },
+            {
+              transform: `translate(
+                calc(-50% + ${Math.cos(angle) * distance}px), 
+                calc(-50% + ${Math.sin(angle) * distance}px)
+              ) scale(0.5)`,
+              opacity: 0
+            }
+          ], {
+            duration: 1000 + Math.random() * 500,
+            easing: 'cubic-bezier(0.1, 0.8, 0.2, 1)'
+          }).onfinish = () => {
+            star.remove();
+          };
+        }
+      }
+    }
+  };
+ 
   return (
     <div className="achievements-container">
       <header className="achievements-header">
@@ -94,7 +160,7 @@ const Achievements = () => {
           Back to Dashboard
         </Link>
       </header>
-
+ 
       {loading ? (
         <p className="loading">Loading achievements...</p>
       ) : error ? (
@@ -109,8 +175,10 @@ const Achievements = () => {
             
             return (
               <div 
-                key={achievement.achievement_id} 
+                key={achievement.achievement_id}
+                id={`achievement-${achievement.achievement_id}`}
                 className={`achievement-card ${earned ? 'earned' : 'locked'}`}
+                onClick={() => handleAchievementClick(achievement)}
               >
                 <div className="badge-icon">
                   {earned ? (
@@ -140,6 +208,6 @@ const Achievements = () => {
       )}
     </div>
   );
-};
-
-export default Achievements;
+ };
+ 
+ export default Achievements;

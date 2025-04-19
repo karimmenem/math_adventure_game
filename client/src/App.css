@@ -2197,3 +2197,170 @@ body {
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
+
+/* Animation Styles */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-20px); }
+  60% { transform: translateY(-10px); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Level Up Animation Enhancement */
+.level-up-animation {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--success-color) 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+  z-index: 1000;
+  box-shadow: var(--shadow-lg);
+  animation: bounceInOut 3s ease-in-out;
+  min-width: 300px;
+  border: 3px solid gold;
+}
+
+.level-up-animation::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  right: -15px;
+  bottom: -15px;
+  border: 2px dashed gold;
+  border-radius: var(--border-radius);
+  animation: spin 10s linear infinite;
+  pointer-events: none;
+}
+
+.level-up-animation h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+  animation: pulse 1s infinite;
+}
+
+.level-up-animation p {
+  font-size: 1.2rem;
+  animation: float 2s infinite;
+}
+
+/* Achievement Notification Enhancement */
+.achievement-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--success-color) 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+  z-index: 1000;
+  animation: slideInRight 0.5s ease, pulse 2s infinite;
+  min-width: 250px;
+  max-width: 300px;
+  border: 2px solid gold;
+}
+
+.achievement-notification h3 {
+  margin-top: 0;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.2);
+  animation: float 3s infinite;
+}
+
+.new-achievement {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.8rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 0.8rem;
+  animation: float 2s infinite;
+  animation-delay: 0.5s;
+}
+
+/* Achievement Card Animation */
+.achievement-card {
+  transition: all 0.3s;
+}
+
+.achievement-card.earned:hover {
+  transform: translateY(-10px) rotate(2deg);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.achievement-card.locked:hover {
+  transform: translateY(-5px) rotate(-1deg);
+  cursor: not-allowed;
+}
+
+.earned-badge-symbol {
+  animation: pulse 2s infinite;
+}
+
+/* Achievement star animation */
+.achievement-star {
+  position: absolute;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Correct/Incorrect Animation Styles */
+.result-feedback {
+  animation: bounce 1s;
+}
+
+.result-feedback.correct {
+  animation: bounce 1s;
+}
+
+.result-feedback.incorrect {
+  animation: shake 0.5s;
+}
+
+/* Option Button Animation */
+.option-btn:hover {
+  animation: pulse 1s infinite;
+  transform: translateY(-3px);
+}
+
+.option-btn.selected {
+  animation: pulse 1s infinite;
+}
+
+/* Game Character Styles */
+#game-character {
+  animation: float 3s infinite;
+  cursor: pointer;
+}
+
+#speech-bubble {
+  animation: float 2s infinite;
+  animation-delay: 0.5s;
+}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import soundService from '../services/soundService';
+import animationUtils from '../utils/animationUtils';
 
 const Game = () => {
   const { user } = useContext(AuthContext);
@@ -31,6 +32,10 @@ const Game = () => {
   const [problemStartTime, setProblemStartTime] = useState(null);
   const [blitzScore, setBlitzScore] = useState(0);
   const timerRef = useRef(null);
+  
+  // Add refs for animation targets
+  const problemCardRef = useRef(null);
+  const scoreValueRef = useRef(null);
   
   // Initialize game based on mode
   useEffect(() => {
@@ -172,7 +177,166 @@ const Game = () => {
     setSelectedAnswer(answer);
   };
   
-  // Define the endGame function
+  // Updated handleSubmitAnswer function with animations
+  // Updated handleSubmitAnswer function with animations and error handling
+const handleSubmitAnswer = async () => {
+  try {
+    if (!selectedAnswer) return;
+    
+    // Check if session exists before continuing
+    if (!session || !session.session_id) {
+      console.error("No valid session found");
+      setError("Game session not found. Please restart the game.");
+      return;
+    }
+    
+    const token = localStorage.getItem('token');
+    const currentProblem = problems[currentProblemIndex];
+    
+    // Check if we have a valid problem
+    if (!currentProblem || !currentProblem.problem_id) {
+      console.error("No valid problem found");
+      setError("Problem data is missing. Please restart the game.");
+      return;
+    }
+    
+    // Calculate time taken for this problem (for timed modes)
+    let timeTaken = 0;
+    if (gameMode === 'timed' || gameMode === 'blitz') {
+      timeTaken = (Date.now() - problemStartTime) / 1000;
+    }
+    
+    console.log("Submitting answer with session:", session);
+    console.log("Current problem:", currentProblem);
+    
+    const response = await fetch('http://localhost:5000/api/game/submit', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sessionId: session.session_id,
+        problemId: currentProblem.problem_id,
+        answer: selectedAnswer,
+        timeTaken: timeTaken,
+        mode: gameMode
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to submit answer');
+    }
+    
+    const data = await response.json();
+    setResult(data);
+    
+    // For blitz mode, update score with animation
+    if (gameMode === 'blitz' && data.correct) {
+      const newScore = blitzScore + 1;
+      setBlitzScore(newScore);
+      
+      if (scoreValueRef.current) {
+        animationUtils.animateCounter(scoreValueRef.current, blitzScore, newScore, 500);
+      }
+    }
+    
+    // Play appropriate sound based on whether answer is correct
+    if (data.correct) {
+      soundService.play('correct');
+      // Show correct animations - safely handle potentially undefined correct_answer
+      const answer = currentProblem.correct_answer || data.correctAnswer || "";
+      animationUtils.createNumberParticles(problemCardRef.current, answer, true);
+      animationUtils.showCharacterReaction('correct');
+    } else {
+      soundService.play('incorrect');
+      // Show incorrect animations - safely handle potentially undefined correct_answer
+      const answer = data.correctAnswer || "";
+      animationUtils.createNumberParticles(problemCardRef.current, answer, false);
+      animationUtils.showCharacterReaction('incorrect');
+    }
+    
+    // Show level up animation if user leveled up
+    if (data.leveledUp) {
+      setLevelUpAnimation(true);
+      soundService.play('levelUp');
+      animationUtils.createCelebration();
+      animationUtils.showCharacterReaction('levelUp');
+      setTimeout(() => {
+        setLevelUpAnimation(false);
+      }, 3000);
+    }
+    
+    // Show result for 2 seconds then move to next problem
+    setTimeout(() => {
+      setResult(null);
+      setSelectedAnswer('');
+      
+      if (currentProblemIndex < problems.length - 1 && (gameMode !== 'blitz' || timeLeft > 0)) {
+        setCurrentProblemIndex(prevIndex => prevIndex + 1);
+        
+        // Reset timer for timed mode
+        if (gameMode === 'timed') {
+          setTimeLeft(totalTime);
+          setProblemStartTime(Date.now());
+          startTimer();
+        }
+      } else if (gameMode === 'blitz' && timeLeft > 0) {
+        // In blitz mode, get a new problem as long as there's time left
+        setCurrentProblemIndex(prevIndex => prevIndex + 1);
+        
+        // If we've used all problems, cycle back to the beginning
+        if (currentProblemIndex >= problems.length - 1) {
+          setCurrentProblemIndex(0);
+        }
+      } else {
+        endGame();
+      }
+    }, data.leveledUp ? 4000 : 2000); // Wait longer if level up animation is showing
+  } catch (error) {
+    console.error('Submit answer error:', error);
+    setError('Failed to submit your answer. Please try again.');
+  }
+};
+  
+  // Update checkAchievements to show celebration for new achievements
+  const checkAchievements = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('http://localhost:5000/api/achievements/check', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to check achievements');
+      }
+      
+      const data = await response.json();
+      
+      // Show achievement notification if user earned a new achievement
+      if (data.hasNewAchievements) {
+        setNewAchievements(data.newAchievements);
+        setShowAchievementNotification(true);
+        soundService.play('achievement');
+        animationUtils.createCelebration();
+        animationUtils.showCharacterReaction('achievement');
+        
+        // Hide notification after 5 seconds
+        setTimeout(() => {
+          setShowAchievementNotification(false);
+        }, 5000);
+      }
+    } catch (error) {
+      console.error('Achievement check error:', error);
+    }
+  };
+  
+  // Update the endGame function to show celebration
   const endGame = async () => {
     try {
       if (timerRef.current) {
@@ -202,132 +366,20 @@ const Game = () => {
       setSummary(data.summary);
       setGameOver(true);
       soundService.play('gameEnd');
+      
+      // Show celebration if the player did well
+      if (
+        (gameMode === 'normal' && data.summary.problems_correct / data.summary.problems_attempted >= 0.7) ||
+        (gameMode === 'blitz' && data.summary.isHighScore)
+      ) {
+        animationUtils.createCelebration();
+      }
+      
+      // Check for new achievements
       checkAchievements();
     } catch (error) {
       console.error('End game error:', error);
       setError('Failed to end the game. Please try again.');
-    }
-  };
-  
-  const checkAchievements = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      const response = await fetch('http://localhost:5000/api/achievements/check', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to check achievements');
-      }
-      
-      const data = await response.json();
-      
-      // Show achievement notification if user earned a new achievement
-      if (data.hasNewAchievements) {
-        setNewAchievements(data.newAchievements);
-        setShowAchievementNotification(true);
-        soundService.play('achievement');
-        
-        // Hide notification after 5 seconds
-        setTimeout(() => {
-          setShowAchievementNotification(false);
-        }, 5000);
-      }
-    } catch (error) {
-      console.error('Achievement check error:', error);
-    }
-  };
-  
-  const handleSubmitAnswer = async () => {
-    try {
-      if (!selectedAnswer) return;
-      
-      const token = localStorage.getItem('token');
-      const currentProblem = problems[currentProblemIndex];
-      
-      // Calculate time taken for this problem (for timed modes)
-      let timeTaken = 0;
-      if (gameMode === 'timed' || gameMode === 'blitz') {
-        timeTaken = (Date.now() - problemStartTime) / 1000;
-      }
-      
-      const response = await fetch('http://localhost:5000/api/game/submit', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          sessionId: session.session_id,
-          problemId: currentProblem.problem_id,
-          answer: selectedAnswer,
-          timeTaken: timeTaken,
-          mode: gameMode
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to submit answer');
-      }
-      
-      const data = await response.json();
-      setResult(data);
-      
-      // For blitz mode, update score
-      if (gameMode === 'blitz' && data.correct) {
-        setBlitzScore(prev => prev + 1);
-      }
-      
-      // Play appropriate sound based on whether answer is correct
-      if (data.correct) {
-        soundService.play('correct');
-      } else {
-        soundService.play('incorrect');
-      }
-      
-      // Show level up animation if user leveled up
-      if (data.leveledUp) {
-        setLevelUpAnimation(true);
-        soundService.play('levelUp');
-        setTimeout(() => {
-          setLevelUpAnimation(false);
-        }, 3000);
-      }
-      
-      // Show result for 2 seconds then move to next problem
-      setTimeout(() => {
-        setResult(null);
-        setSelectedAnswer('');
-        
-        if (currentProblemIndex < problems.length - 1 && (gameMode !== 'blitz' || timeLeft > 0)) {
-          setCurrentProblemIndex(prevIndex => prevIndex + 1);
-          
-          // Reset timer for timed mode
-          if (gameMode === 'timed') {
-            setTimeLeft(totalTime);
-            setProblemStartTime(Date.now());
-            startTimer();
-          }
-        } else if (gameMode === 'blitz' && timeLeft > 0) {
-          // In blitz mode, get a new problem as long as there's time left
-          setCurrentProblemIndex(prevIndex => prevIndex + 1);
-          
-          // If we've used all problems, cycle back to the beginning
-          if (currentProblemIndex >= problems.length - 1) {
-            setCurrentProblemIndex(0);
-          }
-        } else {
-          endGame();
-        }
-      }, data.leveledUp ? 4000 : 2000); // Wait longer if level up animation is showing
-    } catch (error) {
-      console.error('Submit answer error:', error);
-      setError('Failed to submit your answer. Please try again.');
     }
   };
   
@@ -355,6 +407,7 @@ const Game = () => {
     );
   }
   
+  // Updated render section to include refs
   if (gameOver && summary) {
     return (
       <div className="game-over-container">
@@ -418,7 +471,7 @@ const Game = () => {
           {(gameMode === 'timed' || gameMode === 'blitz') && (
             <div className={`timer ${timeLeft <= 5 ? 'timer-warning' : ''}`}>
               {gameMode === 'blitz' && (
-                <div className="blitz-counter">Score: {blitzScore}</div>
+                <div className="blitz-counter">Score: <span ref={scoreValueRef}>{blitzScore}</span></div>
               )}
               <div className="timer-display">{formatTime(timeLeft)}</div>
               {gameMode === 'timed' && (
@@ -457,7 +510,7 @@ const Game = () => {
       )}
       
       {currentProblem && (
-        <div className="problem-card">
+        <div className="problem-card" ref={problemCardRef}>
           <h3 className="problem-category">{currentProblem.category}</h3>
           <p className="problem-question">{currentProblem.question}</p>
           

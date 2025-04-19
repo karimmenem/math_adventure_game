@@ -1,7 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import soundService from '../services/soundService';
+import animationUtils from '../utils/animationUtils';
 
 const Dashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -9,6 +10,12 @@ const Dashboard = () => {
   const [highScores, setHighScores] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [prevProgress, setPrevProgress] = useState(null);
+  
+  // Refs for counter animations
+  const levelRef = useRef(null);
+  const pointsRef = useRef(null);
+  const solvedRef = useRef(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -33,6 +40,9 @@ const Dashboard = () => {
         }
 
         const progressData = await progressResponse.json();
+        
+        // Store previous progress for animations
+        setPrevProgress(userProgress);
         setUserProgress(progressData);
         
         // Fetch high scores if available
@@ -65,6 +75,41 @@ const Dashboard = () => {
     // Preload sounds when dashboard loads
     soundService.preloadSounds();
   }, []);
+  
+  // Animate counters when userProgress changes
+  useEffect(() => {
+    if (!loading && userProgress && prevProgress) {
+      // Animate level if changed
+      if (levelRef.current && prevProgress.current_level !== userProgress.current_level) {
+        animationUtils.animateCounter(
+          levelRef.current, 
+          prevProgress.current_level, 
+          userProgress.current_level, 
+          1000
+        );
+      }
+      
+      // Animate points if changed
+      if (pointsRef.current && prevProgress.total_points !== userProgress.total_points) {
+        animationUtils.animateCounter(
+          pointsRef.current, 
+          prevProgress.total_points, 
+          userProgress.total_points, 
+          1000
+        );
+      }
+      
+      // Animate problems solved if changed
+      if (solvedRef.current && prevProgress.problems_solved !== userProgress.problems_solved) {
+        animationUtils.animateCounter(
+          solvedRef.current, 
+          prevProgress.problems_solved, 
+          userProgress.problems_solved, 
+          1000
+        );
+      }
+    }
+  }, [userProgress, prevProgress, loading]);
 
   const handleLogout = () => {
     soundService.play('click');
@@ -78,6 +123,15 @@ const Dashboard = () => {
   const handleViewAchievements = () => {
     soundService.play('click');
   };
+  
+  // Show mascot character greeting on dashboard
+  useEffect(() => {
+    if (!loading && userProgress) {
+      setTimeout(() => {
+        animationUtils.showCharacterReaction(null); // Show neutral mascot greeting
+      }, 500);
+    }
+  }, [loading, userProgress]);
 
   return (
     <div className="dashboard-container">
@@ -96,19 +150,19 @@ const Dashboard = () => {
         ) : (
           <>
             <div className="user-stats">
-              <div className="stat-card">
+              <div className="stat-card" onClick={() => animationUtils.showCharacterReaction('levelUp')}>
                 <h3>Current Level</h3>
-                <p className="stat-value">{userProgress?.current_level}</p>
+                <p className="stat-value" ref={levelRef}>{userProgress?.current_level}</p>
               </div>
               
               <div className="stat-card">
                 <h3>Total Points</h3>
-                <p className="stat-value">{userProgress?.total_points}</p>
+                <p className="stat-value" ref={pointsRef}>{userProgress?.total_points}</p>
               </div>
               
               <div className="stat-card">
                 <h3>Problems Solved</h3>
-                <p className="stat-value">{userProgress?.problems_solved}</p>
+                <p className="stat-value" ref={solvedRef}>{userProgress?.problems_solved}</p>
               </div>
             </div>
             
