@@ -63,6 +63,24 @@ const Achievements = () => {
     return date.toLocaleDateString();
   };
 
+  // Get appropriate emoji for achievement
+  const getAchievementEmoji = (name) => {
+    if (name.includes('Novice')) return '🌟';
+    if (name.includes('Explorer')) return '🧭';
+    if (name.includes('Wizard')) return '🧙';
+    if (name.includes('Streak')) return '🔥';
+    if (name.includes('Speed')) return '⚡';
+    if (name.includes('Prodigy')) return '🏆';
+    if (name.includes('King')) return '👑';
+    if (name.includes('Master')) return '🎓';
+    if (name.includes('Perfect')) return '💯';
+    if (name.includes('Champion')) return '🏅';
+    if (name.includes('Learner')) return '📚';
+    if (name.includes('Solver')) return '🧩';
+    if (name.includes('Thinker')) return '🧠';
+    return '🏅'; // Default fallback
+  };
+
   return (
     <div className="achievements-container">
       <header className="achievements-header">
@@ -90,15 +108,13 @@ const Achievements = () => {
                 className={`achievement-card ${earned ? 'earned' : 'locked'}`}
               >
                 <div className="badge-icon">
-                  <img 
-                    src={`/icons/${achievement.badge_icon}`} 
-                    alt={achievement.name}
-                    onError={(e) => {
-                      e.target.src = earned 
-                        ? '/icons/default_badge.png' 
-                        : '/icons/locked_badge.png';
-                    }}
-                  />
+                  {earned ? (
+                    <div className="earned-badge-symbol">
+                      {getAchievementEmoji(achievement.name)}
+                    </div>
+                  ) : (
+                    <div className="locked-badge-symbol">🔒</div>
+                  )}
                 </div>
                 <div className="achievement-details">
                   <h3>{achievement.name}</h3>
