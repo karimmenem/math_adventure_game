@@ -1,11 +1,14 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import soundService from '../services/soundService';
 
 const Game = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const gameMode = searchParams.get('mode') || 'normal';
   
   // State variables
   const [newAchievements, setNewAchievements] = useState([]);
@@ -21,7 +24,28 @@ const Game = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [levelUpAnimation, setLevelUpAnimation] = useState(false);
-
+  
+  // Timer-related states
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [totalTime, setTotalTime] = useState(null);
+  const [problemStartTime, setProblemStartTime] = useState(null);
+  const [blitzScore, setBlitzScore] = useState(0);
+  const timerRef = useRef(null);
+  
+  // Initialize game based on mode
+  useEffect(() => {
+    let initialTime = null;
+    
+    if (gameMode === 'timed') {
+      initialTime = 30; // 30 seconds per problem
+    } else if (gameMode === 'blitz') {
+      initialTime = 60; // 60 seconds for the entire game
+    }
+    
+    setTimeLeft(initialTime);
+    setTotalTime(initialTime);
+  }, [gameMode]);
+  
   // Start game session when component mounts
   useEffect(() => {
     const startGame = async () => {
@@ -35,7 +59,8 @@ const Game = () => {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify({ mode: gameMode })
         });
         
         if (!sessionResponse.ok) {
@@ -46,7 +71,7 @@ const Game = () => {
         setSession(sessionData.session);
         
         // Get problems for this game
-        const problemsResponse = await fetch('http://localhost:5000/api/game/problems', {
+        const problemsResponse = await fetch(`http://localhost:5000/api/game/problems?mode=${gameMode}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -63,6 +88,12 @@ const Game = () => {
         
         // Play game start sound
         soundService.play('gameStart');
+        
+        // Set problem start time for timed mode
+        if (gameMode === 'timed' || gameMode === 'blitz') {
+          setProblemStartTime(Date.now());
+          startTimer();
+        }
       } catch (error) {
         console.error('Game initialization error:', error);
         setError('Failed to start the game. Please try again.');
@@ -71,16 +102,83 @@ const Game = () => {
     };
     
     startGame();
-  }, []);
-
+    
+    // Cleanup function to clear timer on unmount
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [gameMode]);
+  
+  // Timer function
+  const startTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prevTime => {
+        if (prevTime <= 1) {
+          // Time's up
+          clearInterval(timerRef.current);
+          
+          if (gameMode === 'timed') {
+            // In timed mode, time up on current problem means incorrect
+            handleTimeUp();
+            return 0;
+          } else if (gameMode === 'blitz') {
+            // In blitz mode, time up means game over
+            endGame();
+            return 0;
+          }
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+  };
+  
+  // Handle time up for timed mode
+  const handleTimeUp = () => {
+    if (gameMode === 'timed') {
+      const currentProblem = problems[currentProblemIndex];
+      soundService.play('incorrect');
+      
+      setResult({
+        correct: false,
+        pointsEarned: 0,
+        correctAnswer: currentProblem.correct_answer
+      });
+      
+      // Move to next problem after showing result
+      setTimeout(() => {
+        setResult(null);
+        setSelectedAnswer('');
+        
+        if (currentProblemIndex < problems.length - 1) {
+          setCurrentProblemIndex(prevIndex => prevIndex + 1);
+          setTimeLeft(totalTime); // Reset timer
+          setProblemStartTime(Date.now());
+          startTimer();
+        } else {
+          endGame();
+        }
+      }, 2000);
+    }
+  };
+  
   const handleAnswerSelect = (answer) => {
     soundService.play('click');
     setSelectedAnswer(answer);
   };
-
+  
   // Define the endGame function
   const endGame = async () => {
     try {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      
       const token = localStorage.getItem('token');
       
       const response = await fetch('http://localhost:5000/api/game/end', {
@@ -90,7 +188,9 @@ const Game = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          sessionId: session.session_id
+          sessionId: session.session_id,
+          mode: gameMode,
+          blitzScore: gameMode === 'blitz' ? blitzScore : undefined
         })
       });
       
@@ -108,7 +208,7 @@ const Game = () => {
       setError('Failed to end the game. Please try again.');
     }
   };
-
+  
   const checkAchievements = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -142,13 +242,19 @@ const Game = () => {
       console.error('Achievement check error:', error);
     }
   };
-
+  
   const handleSubmitAnswer = async () => {
     try {
       if (!selectedAnswer) return;
       
       const token = localStorage.getItem('token');
       const currentProblem = problems[currentProblemIndex];
+      
+      // Calculate time taken for this problem (for timed modes)
+      let timeTaken = 0;
+      if (gameMode === 'timed' || gameMode === 'blitz') {
+        timeTaken = (Date.now() - problemStartTime) / 1000;
+      }
       
       const response = await fetch('http://localhost:5000/api/game/submit', {
         method: 'POST',
@@ -159,7 +265,9 @@ const Game = () => {
         body: JSON.stringify({
           sessionId: session.session_id,
           problemId: currentProblem.problem_id,
-          answer: selectedAnswer
+          answer: selectedAnswer,
+          timeTaken: timeTaken,
+          mode: gameMode
         })
       });
       
@@ -169,6 +277,11 @@ const Game = () => {
       
       const data = await response.json();
       setResult(data);
+      
+      // For blitz mode, update score
+      if (gameMode === 'blitz' && data.correct) {
+        setBlitzScore(prev => prev + 1);
+      }
       
       // Play appropriate sound based on whether answer is correct
       if (data.correct) {
@@ -191,8 +304,23 @@ const Game = () => {
         setResult(null);
         setSelectedAnswer('');
         
-        if (currentProblemIndex < problems.length - 1) {
+        if (currentProblemIndex < problems.length - 1 && (gameMode !== 'blitz' || timeLeft > 0)) {
           setCurrentProblemIndex(prevIndex => prevIndex + 1);
+          
+          // Reset timer for timed mode
+          if (gameMode === 'timed') {
+            setTimeLeft(totalTime);
+            setProblemStartTime(Date.now());
+            startTimer();
+          }
+        } else if (gameMode === 'blitz' && timeLeft > 0) {
+          // In blitz mode, get a new problem as long as there's time left
+          setCurrentProblemIndex(prevIndex => prevIndex + 1);
+          
+          // If we've used all problems, cycle back to the beginning
+          if (currentProblemIndex >= problems.length - 1) {
+            setCurrentProblemIndex(0);
+          }
         } else {
           endGame();
         }
@@ -202,16 +330,22 @@ const Game = () => {
       setError('Failed to submit your answer. Please try again.');
     }
   };
-
+  
   const returnToDashboard = () => {
     soundService.play('click');
     navigate('/dashboard');
   };
-
+  
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+  
   if (loading) {
     return <div className="loading">Loading game...</div>;
   }
-
+  
   if (error) {
     return (
       <div className="error-container">
@@ -220,27 +354,45 @@ const Game = () => {
       </div>
     );
   }
-
+  
   if (gameOver && summary) {
     return (
       <div className="game-over-container">
         <h2>Game Complete!</h2>
-        <div className="game-summary">
-          <p>Problems Attempted: {summary.problems_attempted}</p>
-          <p>Correct Answers: {summary.problems_correct}</p>
-          <p>Points Earned: {summary.points_earned}</p>
-          <p>Time Taken: {Math.floor(summary.duration_seconds / 60)}m {Math.floor(summary.duration_seconds % 60)}s</p>
+        
+        {gameMode === 'blitz' ? (
+          <div className="blitz-summary">
+            <div className="blitz-score">{blitzScore}</div>
+            <p className="blitz-label">Problems Solved in 60 Seconds</p>
+            
+            {summary.isHighScore && (
+              <div className="high-score-badge">New High Score!</div>
+            )}
+          </div>
+        ) : (
+          <div className="game-summary">
+            <p>Problems Attempted: {summary.problems_attempted}</p>
+            <p>Correct Answers: {summary.problems_correct}</p>
+            <p>Points Earned: {summary.points_earned}</p>
+            <p>Time Taken: {Math.floor(summary.duration_seconds / 60)}m {Math.floor(summary.duration_seconds % 60)}s</p>
+          </div>
+        )}
+        
+        <div className="game-over-buttons">
+          <button onClick={() => navigate('/game-mode')} className="play-again-btn">
+            Play Again
+          </button>
+          <button onClick={returnToDashboard} className="return-btn">
+            Back to Dashboard
+          </button>
         </div>
-        <button onClick={returnToDashboard} className="return-btn">
-          Back to Dashboard
-        </button>
       </div>
     );
   }
-
+  
   // Get the current problem
   const currentProblem = problems[currentProblemIndex];
-
+  
   return (
     <div className="game-container">
       {showAchievementNotification && (
@@ -254,27 +406,56 @@ const Game = () => {
           ))}
         </div>
       )}
-
+      
       <div className="game-header">
-        <h2>Math Adventure</h2>
-        {levelInfo && (
+        <div className="game-header-top">
+          <h2>
+            Math Adventure
+            {gameMode === 'timed' && <span className="mode-badge">Timed</span>}
+            {gameMode === 'blitz' && <span className="mode-badge blitz">Blitz</span>}
+          </h2>
+          
+          {(gameMode === 'timed' || gameMode === 'blitz') && (
+            <div className={`timer ${timeLeft <= 5 ? 'timer-warning' : ''}`}>
+              {gameMode === 'blitz' && (
+                <div className="blitz-counter">Score: {blitzScore}</div>
+              )}
+              <div className="timer-display">{formatTime(timeLeft)}</div>
+              {gameMode === 'timed' && (
+                <div className="timer-bar">
+                  <div 
+                    className="timer-progress" 
+                    style={{ width: `${(timeLeft / totalTime) * 100}%` }}
+                  ></div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        
+        {gameMode === 'normal' && levelInfo && (
           <div className="level-info">
             <span className="level-name">{levelInfo.level_name}</span>
             <p className="level-description">{levelInfo.description}</p>
           </div>
         )}
+        
         <div className="progress-indicator">
-          Problem {currentProblemIndex + 1} of {problems.length}
+          {gameMode !== 'blitz' ? (
+            `Problem ${currentProblemIndex + 1} of ${problems.length}`
+          ) : (
+            `Time remaining: ${formatTime(timeLeft)}`
+          )}
         </div>
       </div>
-
+      
       {levelUpAnimation && (
         <div className="level-up-animation">
           <h2>Level Up!</h2>
           <p>Congratulations! You've reached {result?.newLevel?.name}!</p>
         </div>
       )}
-
+      
       {currentProblem && (
         <div className="problem-card">
           <h3 className="problem-category">{currentProblem.category}</h3>

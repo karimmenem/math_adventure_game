@@ -12,8 +12,9 @@ import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Game from "./pages/Game";
+import GameModeSelect from "./pages/GameModeSelect"; // Import this
 import Achievements from "./pages/Achievements";
-import Profile from "./pages/Profile"; // Add this import
+import Profile from "./pages/Profile";
 import soundService from "./services/soundService";
 import "./App.css";
 
@@ -48,6 +49,14 @@ function App() {
                 }
               />
               <Route
+                path="/game-mode"
+                element={
+                  <ProtectedRoute>
+                    <GameModeSelect />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/game"
                 element={
                   <ProtectedRoute>
@@ -63,7 +72,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              {/* Add the Profile route */}
               <Route
                 path="/profile"
                 element={

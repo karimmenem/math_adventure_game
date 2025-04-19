@@ -1,20 +1,19 @@
-// client/src/pages/Dashboard.js
 import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import GameModeSelector from '../components/game/GameModeSelector';
 import soundService from '../services/soundService';
 
 const Dashboard = () => {
   const { user, logout } = useContext(AuthContext);
   const [userProgress, setUserProgress] = useState(null);
+  const [highScores, setHighScores] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showGameModeSelector, setShowGameModeSelector] = useState(false);
 
   useEffect(() => {
-    const fetchUserProgress = async () => {
+    const fetchUserData = async () => {
       try {
+        setLoading(true);
         const token = localStorage.getItem('token');
         if (!token) {
           setError('Authentication token not found');
@@ -22,27 +21,46 @@ const Dashboard = () => {
           return;
         }
 
-        const response = await fetch('http://localhost:5000/api/users/progress', {
+        // Fetch user progress
+        const progressResponse = await fetch('http://localhost:5000/api/users/progress', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
-        if (!response.ok) {
+        if (!progressResponse.ok) {
           throw new Error('Failed to fetch user progress');
         }
 
-        const data = await response.json();
-        setUserProgress(data);
+        const progressData = await progressResponse.json();
+        setUserProgress(progressData);
+        
+        // Fetch high scores if available
+        try {
+          const highScoresResponse = await fetch('http://localhost:5000/api/users/high-scores', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (highScoresResponse.ok) {
+            const highScoresData = await highScoresResponse.json();
+            setHighScores(highScoresData);
+          }
+        } catch (highScoreError) {
+          // Don't fail if high scores aren't available
+          console.log('High scores not available yet');
+        }
+        
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching user progress:', error);
+        console.error('Error fetching user data:', error);
         setError('Failed to load your progress. Please try again later.');
         setLoading(false);
       }
     };
 
-    fetchUserProgress();
+    fetchUserData();
     
     // Preload sounds when dashboard loads
     soundService.preloadSounds();
@@ -53,14 +71,8 @@ const Dashboard = () => {
     logout();
   };
   
-  const handleStartGameClick = () => {
+  const handleStartGame = () => {
     soundService.play('click');
-    setShowGameModeSelector(true);
-  };
-  
-  const handleCloseGameModeSelector = () => {
-    soundService.play('click');
-    setShowGameModeSelector(false);
   };
   
   const handleViewAchievements = () => {
@@ -69,10 +81,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      {showGameModeSelector && (
-        <GameModeSelector onClose={handleCloseGameModeSelector} />
-      )}
-      
       <header className="dashboard-header">
         <h1>Welcome, {user?.username}!</h1>
         <button onClick={handleLogout} className="logout-btn">
@@ -82,7 +90,7 @@ const Dashboard = () => {
 
       <div className="dashboard-content">
         {loading ? (
-          <p>Loading your progress...</p>
+          <p className="loading">Loading your progress...</p>
         ) : error ? (
           <p className="error-message">{error}</p>
         ) : (
@@ -103,11 +111,22 @@ const Dashboard = () => {
                 <p className="stat-value">{userProgress?.problems_solved}</p>
               </div>
             </div>
+            
+            {highScores && highScores.blitz > 0 && (
+              <div className="high-scores">
+                <h3>Your Best Scores</h3>
+                <div className="high-score-card">
+                  <div className="high-score-mode">Blitz Mode</div>
+                  <div className="high-score-value">{highScores.blitz}</div>
+                  <div className="high-score-label">problems in 60 seconds</div>
+                </div>
+              </div>
+            )}
 
             <div className="action-buttons">
-              <button onClick={handleStartGameClick} className="start-game-btn">
+              <Link to="/game-mode" className="start-game-btn" onClick={handleStartGame}>
                 Start New Game
-              </button>
+              </Link>
               <Link to="/achievements" className="view-achievements-btn" onClick={handleViewAchievements}>
                 View Achievements
               </Link>
