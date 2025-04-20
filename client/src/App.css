@@ -2364,3 +2364,185 @@ body {
   animation: float 2s infinite;
   animation-delay: 0.5s;
 }
+
+/* Enhanced Problem Card Styles */
+.problem-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-light);
+}
+
+.problem-category {
+  color: var(--primary-color);
+  margin: 0;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.problem-type {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.problem-points {
+  background-color: var(--secondary-color);
+  color: var(--text-dark);
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.problem-content {
+  margin-bottom: 1.5rem;
+}
+
+.problem-question {
+  font-size: 1.5rem;
+  color: var(--text-dark);
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Special Problem Type Styles */
+.special-problem-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Fraction Problem Styles */
+.fraction-problem .fraction-visual {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.fraction-operation {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fraction-visual-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fraction-representation {
+  border: 2px solid var(--primary-color);
+  border-radius: 8px;
+}
+
+.fraction-symbol {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+/* Geometry Problem Styles */
+.geometry-problem .geometry-visual {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.geometry-shape {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.geometry-shape svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Practice Mode Styles */
+.practice-mode {
+  background-color: #f0f8ff;
+}
+
+.practice-options {
+  background-color: white;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  animation: slideIn 0.5s;
+}
+
+.problem-type-filter h3 {
+  margin-top: 0;
+  color: var(--primary-dark);
+  margin-bottom: 1rem;
+}
+
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.filter-option {
+  background-color: var(--background-light);
+  border: 2px solid transparent;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.filter-option:hover {
+  background-color: var(--primary-light);
+  transform: translateY(-2px);
+}
+
+.filter-option.selected {
+  background-color: var(--primary-light);
+  border-color: var(--primary-color);
+  color: var(--primary-dark);
+  font-weight: bold;
+}
+
+.start-practice-btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: block;
+  margin: 0 auto;
+  font-family: var(--font-main);
+}
+
+.start-practice-btn:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.start-practice-btn:disabled {
+  background-color: var(--text-light);
+  cursor: not-allowed;
+}

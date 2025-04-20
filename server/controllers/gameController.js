@@ -26,7 +26,6 @@ const gameController = {
   },
   
   // Get problems based on user level
-  // Update the getProblems method in gameController.js
   async getProblems(req, res) {
     try {
       const userId = req.user.userId;
@@ -66,9 +65,9 @@ const gameController = {
       let queryParams;
       
       if (mode === 'normal') {
-        // For normal mode, get problems based on current level
+        // For normal mode, get problems based on current level's category
         problemsQuery = `
-          SELECT problem_id, category, difficulty_level, question, options, points
+          SELECT problem_id, category, difficulty_level, problem_type, question, options, points
           FROM problems
           WHERE category = $1 AND difficulty_level <= $2
           ORDER BY RANDOM()
@@ -78,7 +77,7 @@ const gameController = {
       } else if (mode === 'timed' || mode === 'blitz') {
         // For timed or blitz mode, get a mix of problems with varied difficulty
         problemsQuery = `
-          SELECT problem_id, category, difficulty_level, question, options, points
+          SELECT problem_id, category, difficulty_level, problem_type, question, options, points
           FROM problems
           WHERE difficulty_level <= $1
           ORDER BY RANDOM()
@@ -96,7 +95,7 @@ const gameController = {
       // If we don't have enough problems, supplement with others
       if (problemsResult.rows.length < 5 && mode === 'normal') {
         const supplementalQuery = `
-          SELECT problem_id, category, difficulty_level, question, options, points
+          SELECT problem_id, category, difficulty_level, problem_type, question, options, points
           FROM problems
           WHERE category != $1 AND difficulty_level <= $2
           ORDER BY RANDOM()
@@ -129,8 +128,111 @@ const gameController = {
       res.status(500).json({ message: 'Server error when fetching problems' });
     }
   },
+
+  // Get practice problems by specific problem types
+  async getPracticeProblems(req, res) {
+    try {
+      const userId = req.user.userId;
+      const problemTypes = req.query.problemTypes ? req.query.problemTypes.split(',') : [];
+      
+      // Log for debugging
+      console.log('Practice mode requested with problem types:', problemTypes);
+      
+      // Get user's current level for difficulty capping
+      const userQuery = 'SELECT current_level FROM user_progress WHERE user_id = $1';
+      const userResult = await pool.query(userQuery, [userId]);
+      
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ message: 'User progress not found' });
+      }
+      
+      const currentLevel = userResult.rows[0].current_level;
+      const maxDifficulty = Math.min(currentLevel, 3); // Cap at difficulty 3
+      
+      // Build query based on selected problem types
+      let problemsQuery;
+      let queryParams;
+      
+      // Simpler approach - if problem types are selected, use OR conditions rather than array operators
+      if (problemTypes.length > 0) {
+        const conditions = [];
+        
+        // Create conditions for each problem type
+        problemTypes.forEach((type, index) => {
+          conditions.push(`LOWER(category) = LOWER($${index + 2})`);
+          conditions.push(`LOWER(problem_type) = LOWER($${index + 2})`);
+        });
+        
+        problemsQuery = `
+          SELECT problem_id, category, difficulty_level, problem_type, question, options, correct_answer, points
+          FROM problems
+          WHERE difficulty_level <= $1
+          AND (${conditions.join(' OR ')})
+          ORDER BY RANDOM()
+          LIMIT 5
+        `;
+        
+        queryParams = [maxDifficulty, ...problemTypes];
+        
+        console.log('Practice mode query:', problemsQuery);
+        console.log('Practice mode params:', queryParams);
+      } else {
+        // Get a random mix if no specific types are selected
+        problemsQuery = `
+          SELECT problem_id, category, difficulty_level, problem_type, question, options, correct_answer, points
+          FROM problems
+          WHERE difficulty_level <= $1
+          ORDER BY RANDOM()
+          LIMIT 5
+        `;
+        queryParams = [maxDifficulty];
+      }
+      
+      const problemsResult = await pool.query(problemsQuery, queryParams);
+      console.log('Problems found count:', problemsResult.rows.length);
+      
+      // If we don't find any problems using the filters, fall back to random problems
+      if (problemsResult.rows.length === 0 && problemTypes.length > 0) {
+        console.log('No matching problems found, using fallback query');
+        
+        const fallbackQuery = `
+          SELECT problem_id, category, difficulty_level, problem_type, question, options, correct_answer, points
+          FROM problems
+          WHERE difficulty_level <= $1
+          ORDER BY RANDOM()
+          LIMIT 5
+        `;
+        
+        const fallbackResult = await pool.query(fallbackQuery, [maxDifficulty]);
+        console.log('Fallback found count:', fallbackResult.rows.length);
+        
+        if (fallbackResult.rows.length > 0) {
+          return res.json({
+            problems: fallbackResult.rows,
+            practiceMode: true,
+            problemTypes: problemTypes,
+            fallbackUsed: true // Flag to indicate fallback was used
+          });
+        }
+      }
+      
+      // Send response
+      if (problemsResult.rows.length === 0) {
+        return res.status(404).json({ message: 'No problems found' });
+      }
+      
+      res.json({
+        problems: problemsResult.rows,
+        practiceMode: true,
+        problemTypes: problemTypes
+      });
+    } catch (error) {
+      console.error('Get practice problems error:', error);
+      res.status(500).json({ message: 'Server error when fetching practice problems' });
+    }
+  },
+  
   // Submit answer and update progress
-  // Update the submitAnswer method in gameController.js
   async submitAnswer(req, res) {
     try {
       const { sessionId, problemId, answer, timeTaken, mode } = req.body;

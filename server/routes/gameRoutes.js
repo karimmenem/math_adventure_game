@@ -9,6 +9,7 @@ router.use(authMiddleware);
 // Game routes
 router.post('/start', gameController.startGame);
 router.get('/problems', gameController.getProblems);
+router.get('/practice', gameController.getPracticeProblems);
 router.post('/submit', gameController.submitAnswer);
 router.post('/end', gameController.endGame);
 
