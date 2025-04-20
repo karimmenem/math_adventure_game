@@ -17,7 +17,7 @@ const GameModeSelect = () => {
       return;
     }
     
-    // For other modes, navigate directly to game
+    // Navigate directly to game with selected mode
     navigate(
       `/game?mode=${mode}${
         selectedProblemTypes.length > 0
@@ -59,6 +59,21 @@ const GameModeSelect = () => {
 
         <div
           className="game-mode-card"
+          onClick={() => handleModeSelect("all-types")}
+        >
+          <div className="mode-icon">🌈</div>
+          <h2>All Types Mode</h2>
+          <p>Test your skills across all math categories!</p>
+          <ul className="mode-features">
+            <li>Random problems from all categories</li>
+            <li>Ultimate math challenge</li>
+            <li>Comprehensive skill testing</li>
+          </ul>
+          <button className="mode-select-btn">Start All Types</button>
+        </div>
+
+        <div
+          className="game-mode-card"
           onClick={() => handleModeSelect("timed")}
         >
           <div className="mode-icon">⏱️</div>
@@ -87,6 +102,7 @@ const GameModeSelect = () => {
           <button className="mode-select-btn">Play Blitz Mode</button>
         </div>
 
+        {/* Practice Mode remains the same */}
         <div className="game-mode-card practice-mode">
           <div className="mode-icon">📝</div>
           <h2>Practice Mode</h2>

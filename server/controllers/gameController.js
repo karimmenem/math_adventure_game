@@ -42,6 +42,34 @@ const gameController = {
       
       const totalPoints = userProgressResult.rows[0].total_points;
   
+      // Handling All Types mode
+      if (mode === 'all-types') {
+        const currentLevel = Math.min(Math.floor(totalPoints / 100) + 1, 3); // Derive current level from points
+        const maxDifficulty = Math.min(currentLevel, 3); // Cap at difficulty 3
+  
+        // Get random problems from ALL categories
+        const problemsQuery = `
+          SELECT problem_id, category, difficulty_level, problem_type, question, options, points, correct_answer
+          FROM problems
+          WHERE difficulty_level <= $1
+          ORDER BY RANDOM()
+          LIMIT 5
+        `;
+        
+        const problemsResult = await pool.query(problemsQuery, [maxDifficulty]);
+        
+        return res.json({
+          currentLevel: currentLevel,
+          levelInfo: { 
+            level_name: 'All Types Challenge', 
+            description: 'Random problems from all math categories',
+            category: 'Mixed'
+          },
+          problems: problemsResult.rows
+        });
+      }
+  
+      // Existing logic for other modes remains the same
       // If no specific level is selected, find the highest unlocked level
       let selectedLevelId;
       if (!levelId) {
@@ -169,7 +197,7 @@ const gameController = {
       let queryParams;
   
       if (problemTypes.length > 0) {
-        // Construct a more flexible query to match multiple problem type/category conditions
+        // Create an array of conditions to match both category and problem_type
         const conditions = problemTypes.map((type, index) => 
           `(LOWER(category) = LOWER($${index + 2}) OR LOWER(problem_type) = LOWER($${index + 2}))`
         ).join(' OR ');
@@ -185,15 +213,12 @@ const gameController = {
         // Combine maxDifficulty with problem types for query parameters
         queryParams = [maxDifficulty, ...problemTypes];
       } else {
-        // If no specific types selected, get random problems
-        problemsQuery = `
-          SELECT problem_id, category, difficulty_level, problem_type, question, options, correct_answer, points
-          FROM problems
-          WHERE difficulty_level <= $1
-          ORDER BY RANDOM()
-          LIMIT 5
-        `;
-        queryParams = [maxDifficulty];
+        // No problem types selected - return empty result
+        return res.json({
+          problems: [],
+          practiceMode: true,
+          problemTypes: problemTypes
+        });
       }
   
       console.log('Practice mode query:', problemsQuery);
@@ -202,23 +227,13 @@ const gameController = {
       const problemsResult = await pool.query(problemsQuery, queryParams);
       console.log('Problems found count:', problemsResult.rows.length);
   
-      // If no problems found with selected types, fall back to random problems
+      // If no problems found with selected types
       if (problemsResult.rows.length === 0) {
-        const fallbackQuery = `
-          SELECT problem_id, category, difficulty_level, problem_type, question, options, correct_answer, points
-          FROM problems
-          WHERE difficulty_level <= $1
-          ORDER BY RANDOM()
-          LIMIT 5
-        `;
-        
-        const fallbackResult = await pool.query(fallbackQuery, [maxDifficulty]);
-        
         return res.json({
-          problems: fallbackResult.rows,
+          problems: [],
           practiceMode: true,
           problemTypes: problemTypes,
-          fallbackUsed: true
+          message: 'No problems found for selected types'
         });
       }
   
