@@ -30,99 +30,114 @@ const gameController = {
     try {
       const userId = req.user.userId;
       const mode = req.query.mode || 'normal';
+      const levelId = req.query.levelId;
+  
+      // Fetch user's total points
+      const userProgressQuery = 'SELECT total_points FROM user_progress WHERE user_id = $1';
+      const userProgressResult = await pool.query(userProgressQuery, [userId]);
       
-      // Get user's current level and points
-      const userQuery = 'SELECT current_level, total_points FROM user_progress WHERE user_id = $1';
-      const userResult = await pool.query(userQuery, [userId]);
-      
-      if (userResult.rows.length === 0) {
+      if (userProgressResult.rows.length === 0) {
         return res.status(404).json({ message: 'User progress not found' });
       }
       
-      const userProgress = userResult.rows[0];
-      
-      // Get level information based on user's points (for normal mode)
-      let levelInfo = null;
-      if (mode === 'normal') {
-        const levelQuery = `
-          SELECT level_id, level_name, description, category, max_difficulty 
+      const totalPoints = userProgressResult.rows[0].total_points;
+  
+      // If no specific level is selected, find the highest unlocked level
+      let selectedLevelId;
+      if (!levelId) {
+        // Find the highest level the user has unlocked based on their points
+        const unlockedLevelQuery = `
+          SELECT level_id 
           FROM levels 
           WHERE required_points <= $1 
           ORDER BY required_points DESC 
           LIMIT 1
         `;
-        const levelResult = await pool.query(levelQuery, [userProgress.total_points]);
+        const unlockedLevelResult = await pool.query(unlockedLevelQuery, [totalPoints]);
         
-        if (levelResult.rows.length === 0) {
-          return res.status(404).json({ message: 'Level information not found' });
-        }
-        
-        levelInfo = levelResult.rows[0];
+        // If no levels unlocked, start with the first level
+        selectedLevelId = unlockedLevelResult.rows.length > 0 
+          ? unlockedLevelResult.rows[0].level_id 
+          : 1; // Default to first level (Addition Beginner)
+      } else {
+        selectedLevelId = levelId;
+      }
+  
+      // Fetch the specific level details
+      const levelQuery = 'SELECT * FROM levels WHERE level_id = $1';
+      const levelResult = await pool.query(levelQuery, [selectedLevelId]);
+      
+      if (levelResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Level not found' });
       }
       
-      // Get problems appropriate for this level/mode
-      let problemsQuery;
-      let queryParams;
-      
-      if (mode === 'normal') {
-        // For normal mode, get problems based on current level's category
-        problemsQuery = `
-          SELECT problem_id, category, difficulty_level, problem_type, question, options, points
-          FROM problems
-          WHERE category = $1 AND difficulty_level <= $2
-          ORDER BY RANDOM()
-          LIMIT 5
-        `;
-        queryParams = [levelInfo.category, levelInfo.max_difficulty];
-      } else if (mode === 'timed' || mode === 'blitz') {
-        // For timed or blitz mode, get a mix of problems with varied difficulty
-        problemsQuery = `
-          SELECT problem_id, category, difficulty_level, problem_type, question, options, points
-          FROM problems
-          WHERE difficulty_level <= $1
-          ORDER BY RANDOM()
-          LIMIT $2
-        `;
-        // For timed mode, get 5 problems; for blitz mode, get 20 (we'll cycle through them if needed)
-        const problemCount = mode === 'blitz' ? 20 : 5;
-        // Use current level as max difficulty, but cap at 3 to keep it reasonable
-        const maxDifficulty = Math.min(userProgress.current_level, 3);
-        queryParams = [maxDifficulty, problemCount];
+      const levelInfo = levelResult.rows[0];
+  
+      // Validate that the user has enough points to access this level
+      if (levelInfo.required_points > totalPoints) {
+        return res.status(403).json({ 
+          message: 'You have not unlocked this level yet',
+          requiredPoints: levelInfo.required_points,
+          currentPoints: totalPoints
+        });
       }
       
-      const problemsResult = await pool.query(problemsQuery, queryParams);
+      // Get problems for this specific level
+      const problemsQuery = `
+        SELECT problem_id, category, difficulty_level, problem_type, question, options, points, correct_answer
+        FROM problems
+        WHERE 
+          category = $1 AND
+          difficulty_level = $2
+        ORDER BY RANDOM()
+        LIMIT 5
+      `;
       
-      // If we don't have enough problems, supplement with others
-      if (problemsResult.rows.length < 5 && mode === 'normal') {
+      const problemsResult = await pool.query(problemsQuery, [
+        levelInfo.category, 
+        levelInfo.max_difficulty
+      ]);
+      
+      // If not enough problems found, supplement with similar problems
+      if (problemsResult.rows.length < 5) {
         const supplementalQuery = `
-          SELECT problem_id, category, difficulty_level, problem_type, question, options, points
+          SELECT problem_id, category, difficulty_level, problem_type, question, options, points, correct_answer
           FROM problems
-          WHERE category != $1 AND difficulty_level <= $2
+          WHERE 
+            category = $1 AND
+            difficulty_level <= $2
           ORDER BY RANDOM()
-          LIMIT $3
+          LIMIT ${5 - problemsResult.rows.length}
         `;
+        
         const supplementalResult = await pool.query(supplementalQuery, [
-          levelInfo.category,
-          levelInfo.max_difficulty,
-          5 - problemsResult.rows.length
+          levelInfo.category, 
+          levelInfo.max_difficulty
         ]);
         
-        // Combine the results
         problemsResult.rows = [...problemsResult.rows, ...supplementalResult.rows];
       }
       
-      // Send appropriate response based on mode
-      if (mode === 'normal') {
-        res.json({
-          currentLevel: userProgress.current_level,
-          levelInfo: levelInfo,
-          problems: problemsResult.rows
-        });
-      } else {
-        res.json({
-          problems: problemsResult.rows
-        });
-      }
+      // Find next level (if exists)
+      const nextLevelQuery = `
+        SELECT level_id, level_name 
+        FROM levels 
+        WHERE required_points > $1 
+        ORDER BY required_points 
+        LIMIT 1
+      `;
+      const nextLevelResult = await pool.query(nextLevelQuery, [totalPoints]);
+      
+      return res.json({
+        currentLevel: levelInfo.level_id,
+        levelInfo: levelInfo,
+        problems: problemsResult.rows,
+        nextLevel: nextLevelResult.rows.length > 0 ? {
+          id: nextLevelResult.rows[0].level_id,
+          name: nextLevelResult.rows[0].level_name,
+          requiredPoints: nextLevelResult.rows[0].required_points
+        } : null
+      });
     } catch (error) {
       console.error('Get problems error:', error);
       res.status(500).json({ message: 'Server error when fetching problems' });
@@ -148,36 +163,29 @@ const gameController = {
       
       const currentLevel = userResult.rows[0].current_level;
       const maxDifficulty = Math.min(currentLevel, 3); // Cap at difficulty 3
-      
-      // Build query based on selected problem types
+  
+      // Build dynamic query for problem selection
       let problemsQuery;
       let queryParams;
-      
-      // Simpler approach - if problem types are selected, use OR conditions rather than array operators
+  
       if (problemTypes.length > 0) {
-        const conditions = [];
-        
-        // Create conditions for each problem type
-        problemTypes.forEach((type, index) => {
-          conditions.push(`LOWER(category) = LOWER($${index + 2})`);
-          conditions.push(`LOWER(problem_type) = LOWER($${index + 2})`);
-        });
-        
+        // Construct a more flexible query to match multiple problem type/category conditions
+        const conditions = problemTypes.map((type, index) => 
+          `(LOWER(category) = LOWER($${index + 2}) OR LOWER(problem_type) = LOWER($${index + 2}))`
+        ).join(' OR ');
+  
         problemsQuery = `
           SELECT problem_id, category, difficulty_level, problem_type, question, options, correct_answer, points
           FROM problems
-          WHERE difficulty_level <= $1
-          AND (${conditions.join(' OR ')})
+          WHERE difficulty_level <= $1 AND (${conditions})
           ORDER BY RANDOM()
           LIMIT 5
         `;
-        
+  
+        // Combine maxDifficulty with problem types for query parameters
         queryParams = [maxDifficulty, ...problemTypes];
-        
-        console.log('Practice mode query:', problemsQuery);
-        console.log('Practice mode params:', queryParams);
       } else {
-        // Get a random mix if no specific types are selected
+        // If no specific types selected, get random problems
         problemsQuery = `
           SELECT problem_id, category, difficulty_level, problem_type, question, options, correct_answer, points
           FROM problems
@@ -187,14 +195,15 @@ const gameController = {
         `;
         queryParams = [maxDifficulty];
       }
-      
+  
+      console.log('Practice mode query:', problemsQuery);
+      console.log('Practice mode params:', queryParams);
+  
       const problemsResult = await pool.query(problemsQuery, queryParams);
       console.log('Problems found count:', problemsResult.rows.length);
-      
-      // If we don't find any problems using the filters, fall back to random problems
-      if (problemsResult.rows.length === 0 && problemTypes.length > 0) {
-        console.log('No matching problems found, using fallback query');
-        
+  
+      // If no problems found with selected types, fall back to random problems
+      if (problemsResult.rows.length === 0) {
         const fallbackQuery = `
           SELECT problem_id, category, difficulty_level, problem_type, question, options, correct_answer, points
           FROM problems
@@ -204,23 +213,16 @@ const gameController = {
         `;
         
         const fallbackResult = await pool.query(fallbackQuery, [maxDifficulty]);
-        console.log('Fallback found count:', fallbackResult.rows.length);
         
-        if (fallbackResult.rows.length > 0) {
-          return res.json({
-            problems: fallbackResult.rows,
-            practiceMode: true,
-            problemTypes: problemTypes,
-            fallbackUsed: true // Flag to indicate fallback was used
-          });
-        }
+        return res.json({
+          problems: fallbackResult.rows,
+          practiceMode: true,
+          problemTypes: problemTypes,
+          fallbackUsed: true
+        });
       }
-      
+  
       // Send response
-      if (problemsResult.rows.length === 0) {
-        return res.status(404).json({ message: 'No problems found' });
-      }
-      
       res.json({
         problems: problemsResult.rows,
         practiceMode: true,

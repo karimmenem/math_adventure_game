@@ -10,6 +10,14 @@ const GameModeSelect = () => {
 
   const handleModeSelect = (mode) => {
     soundService.play("click");
+    
+    // For Normal Mode, navigate to level selection
+    if (mode === "normal") {
+      navigate("/normal-mode-levels");
+      return;
+    }
+    
+    // For other modes, navigate directly to game
     navigate(
       `/game?mode=${mode}${
         selectedProblemTypes.length > 0
@@ -40,13 +48,13 @@ const GameModeSelect = () => {
         >
           <div className="mode-icon">🧮</div>
           <h2>Normal Mode</h2>
-          <p>Solve math problems at your own pace with no time pressure.</p>
+          <p>Choose your level and progress through math challenges!</p>
           <ul className="mode-features">
-            <li>Progress through levels</li>
+            <li>Level-based progression</li>
             <li>Earn achievements</li>
             <li>Build math skills steadily</li>
           </ul>
-          <button className="mode-select-btn">Play Normal Mode</button>
+          <button className="mode-select-btn">Select Levels</button>
         </div>
 
         <div

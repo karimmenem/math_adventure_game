@@ -5,7 +5,7 @@ import soundService from '../services/soundService';
 import animationUtils from '../utils/animationUtils';
 
 const Dashboard = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const [userProgress, setUserProgress] = useState(null);
   const [highScores, setHighScores] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -110,19 +110,6 @@ const Dashboard = () => {
       }
     }
   }, [userProgress, prevProgress, loading]);
-
-  const handleLogout = () => {
-    soundService.play('click');
-    logout();
-  };
-  
-  const handleStartGame = () => {
-    soundService.play('click');
-  };
-  
-  const handleViewAchievements = () => {
-    soundService.play('click');
-  };
   
   // Show mascot character greeting on dashboard
   useEffect(() => {
@@ -135,13 +122,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <header className="dashboard-header">
-        <h1>Welcome, {user?.username}!</h1>
-        <button onClick={handleLogout} className="logout-btn">
-          Logout
-        </button>
-      </header>
-
       <div className="dashboard-content">
         {loading ? (
           <p className="loading">Loading your progress...</p>
@@ -178,10 +158,10 @@ const Dashboard = () => {
             )}
 
             <div className="action-buttons">
-              <Link to="/game-mode" className="start-game-btn" onClick={handleStartGame}>
+              <Link to="/game-mode" className="start-game-btn">
                 Start New Game
               </Link>
-              <Link to="/achievements" className="view-achievements-btn" onClick={handleViewAchievements}>
+              <Link to="/achievements" className="view-achievements-btn">
                 View Achievements
               </Link>
             </div>

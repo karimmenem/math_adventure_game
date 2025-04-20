@@ -12,7 +12,8 @@ import SignIn from "./pages/SignIn";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Game from "./pages/Game";
-import GameModeSelect from "./pages/GameModeSelect"; // Import this
+import GameModeSelect from "./pages/GameModeSelect";
+import NormalModeLevelSelect from "./pages/NormalModeLevelSelect"; // New import
 import Achievements from "./pages/Achievements";
 import Profile from "./pages/Profile";
 import soundService from "./services/soundService";
@@ -53,6 +54,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <GameModeSelect />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/normal-mode-levels"
+                element={
+                  <ProtectedRoute>
+                    <NormalModeLevelSelect />
                   </ProtectedRoute>
                 }
               />
