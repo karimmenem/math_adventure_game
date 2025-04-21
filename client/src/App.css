@@ -539,9 +539,11 @@ button:disabled {
 
 /* Header Styles */
 .app-header {
-  background-color: var(--primary-color);
+  background: linear-gradient(to bottom, #5cb85c 0%, #4cae4c 100%);
   padding: 0.75rem 0;
   position: relative;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-bottom: 4px solid #FFC107;
 }
 
 .header-container {
@@ -1918,10 +1920,7 @@ body {
 }
 
 /* Add this to your App.css file */
-.profile-username {
-  font-weight: 600;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5); /* Add text shadow for better visibility of white text */
-}
+
 
 .header-avatar {
   width: 32px;
@@ -2980,4 +2979,309 @@ body {
 @keyframes slideIn {
   from { opacity: 0; transform: translateY(40px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add these styles to your App.css file */
+
+/* Make logo clickable without changing its appearance */
+.logo-link {
+  text-decoration: none;
+  display: block;
+  position: relative;
+  padding: 5px 15px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  transition: all 0.3s;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.logo-link:hover .logo {
+  transform: scale(1.05);
+}
+
+.logo {
+  transition: transform 0.3s ease;
+}
+
+/* Optional: Add a subtle hover effect */
+.logo-link:hover .logo-math,
+.logo-link:hover .logo-adventure {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+logo-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.logo {
+  margin: 0;
+  font-family: 'Comic Sans MS', 'Bubblegum Sans', 'Marker Felt', cursive;
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.logo-math {
+  color: white;
+  letter-spacing: 1px;
+  position: relative;
+}
+
+.logo-adventure {
+  color: #FFC107;
+  position: relative;
+}
+
+/* Fun math symbols around the logo */
+.logo::before {
+  content: "123";
+  position: absolute;
+  top: -10px;
+  left: -15px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  transform: rotate(-15deg);
+}
+
+.logo::after {
+  content: "=";
+  position: absolute;
+  bottom: -5px;
+  right: -15px;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.6);
+  transform: rotate(10deg);
+}
+
+/* Navigation Menu */
+.nav-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-menu {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 30px;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.2s;
+  position: relative;
+  padding: 0.5rem 0.8rem;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.nav-link.active {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Fun hover animations */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  background-color: #FFC107;
+  transition: all 0.3s;
+  transform: translateX(-50%);
+  border-radius: 3px;
+}
+
+.nav-link:hover::after {
+  width: 80%;
+}
+
+/* Profile and avatar styling */
+.profile-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.3rem 0.8rem;
+  border-radius: 25px;
+  transition: all 0.3s;
+}
+
+.profile-link:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.profile-username {
+  font-weight: 600;
+  
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+}
+
+.header-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid white;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.profile-link:hover .header-avatar {
+  transform: rotate(10deg);
+}
+
+.header-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Logout Button */
+.nav-button {
+  background-color: #FFC107;
+  color: #333;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 25px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Comic Sans MS', 'Bubblegum Sans', 'Marker Felt', cursive;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+}
+
+.nav-button:hover {
+  background-color: #FFD54F;
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Decorative elements for kids */
+.header-decoration {
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 15px;
+  background: repeating-linear-gradient(
+    45deg,
+    #FFC107,
+    #FFC107 10px,
+    #FFD54F 10px,
+    #FFD54F 20px
+  );
+  border-radius: 0 0 10px 10px;
+  z-index: 1;
+}
+
+/* Math symbols floating around the header */
+.header-math-symbol {
+  position: absolute;
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.5);
+  animation: float 3s infinite ease-in-out;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  z-index: 0;
+}
+
+.header-math-symbol:nth-child(1) {
+  top: 15%;
+  left: 5%;
+  animation-delay: 0s;
+  content: "+";
+}
+
+.header-math-symbol:nth-child(2) {
+  top: 60%;
+  left: 15%;
+  animation-delay: 0.5s;
+  content: "×";
+}
+
+.header-math-symbol:nth-child(3) {
+  top: 20%;
+  right: 20%;
+  animation-delay: 1s;
+  content: "÷";
+}
+
+.header-math-symbol:nth-child(4) {
+  top: 50%;
+  right: 8%;
+  animation-delay: 1.5s;
+  content: "=";
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Sound toggle styling */
+.sound-toggle-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-right: 10px;
+  color: white;
+  font-size: 1.2rem;
+}
+
+.sound-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header-container {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+  
+  .nav-menu {
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0.3rem;
+    gap: 0.3rem;
+  }
+  
+  .nav-link, .nav-button {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .logo {
+    font-size: 1.5rem;
+  }
 }

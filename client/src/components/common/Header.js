@@ -1,11 +1,12 @@
 import React, { useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import SoundToggle from './SoundToggle';
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -17,12 +18,21 @@ const Header = () => {
   
   return (
     <header className="app-header">
+      {/* Add floating math symbols for decoration */}
+      <div className="header-math-symbol">+</div>
+      <div className="header-math-symbol">×</div>
+      <div className="header-math-symbol">÷</div>
+      <div className="header-math-symbol">=</div>
+      
       <div className="header-container">
         <div className="logo-container">
-          <h1 className="logo">
-            <span className="logo-math">Math</span>
-            <span className="logo-adventure">Adventure</span>
-          </h1>
+          {/* Make the logo clickable to navigate to home */}
+          <Link to="/" className="logo-link">
+            <h1 className="logo">
+              <span className="logo-math">Math</span>
+              <span className="logo-adventure">Adventure</span>
+            </h1>
+          </Link>
         </div>
         
         <div className="nav-container">
@@ -30,11 +40,33 @@ const Header = () => {
           
           {isAuthenticated ? (
             <nav className="nav-menu">
-              <Link to="/dashboard" className="nav-link">Dashboard</Link>
-              <Link to="/achievements" className="nav-link">Achievements</Link>
-              <Link to="/about" className="nav-link">About Me</Link>
+              <Link 
+                to="/dashboard" 
+                className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
+              >
+                Dashboard
+              </Link>
+              <Link 
+                to="/achievements" 
+                className={`nav-link ${location.pathname === '/achievements' ? 'active' : ''}`}
+              >
+                Achievements
+              </Link>
+              <Link 
+                to="/about" 
+                className={`nav-link ${location.pathname === '/about' ? 'active' : ''}`}
+              >
+                About Me
+              </Link>
               <Link to="/profile" className="nav-link profile-link">
-                <span className="profile-username" style={{ color: user?.usernameColor || '#4CAF50' }}>
+                {/* Use inline style to respect user's color preference, with white as default */}
+                <span 
+                  className="profile-username" 
+                  style={{ 
+                    color: user?.usernameColor || '#FFFFFF',
+                    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)' // Add shadow for better contrast
+                  }}
+                >
                   {user?.username}
                 </span>
                 <div className="header-avatar">
@@ -47,13 +79,27 @@ const Header = () => {
                   />
                 </div>
               </Link>
-              <button onClick={handleLogout} className="nav-button">Logout</button>
+              <button onClick={handleLogout} className="nav-button">
+                Logout
+              </button>
             </nav>
           ) : (
             <nav className="nav-menu">
-              <Link to="/about" className="nav-link">About Me</Link>
-              <Link to="/signin" className="nav-link">Sign In</Link>
-              <Link to="/signup" className="nav-button">Sign Up</Link>
+              <Link 
+                to="/about" 
+                className={`nav-link ${location.pathname === '/about' ? 'active' : ''}`}
+              >
+                About Me
+              </Link>
+              <Link 
+                to="/signin" 
+                className={`nav-link ${location.pathname === '/signin' ? 'active' : ''}`}
+              >
+                Sign In
+              </Link>
+              <Link to="/signup" className="nav-button">
+                Sign Up
+              </Link>
             </nav>
           )}
         </div>

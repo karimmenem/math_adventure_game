@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext"; // Make sure this path is correct
 
 const Home = () => {
+  // Get authentication state from context
+  const { isAuthenticated, user } = useContext(AuthContext);
+
   return (
     <div className="home-page">
       <section className="hero-section">
@@ -10,18 +14,39 @@ const Home = () => {
             <span className="title-line">Make Math Fun</span>
             <span className="title-line">with Math Adventure!</span>
           </h1>
-          <p className="hero-subtitle">
-            Solve puzzles, earn rewards, and master math skills in a fun
-            learning journey!
-          </p>
-          <div className="hero-buttons">
-            <Link to="/signup" className="btn btn-primary">
-              Start Your Adventure
-            </Link>
-            <Link to="/signin" className="btn btn-secondary">
-              Already Playing? Sign In
-            </Link>
-          </div>
+          
+          {isAuthenticated ? (
+            // Content for logged-in users
+            <>
+              <p className="hero-subtitle">
+                Welcome back, {user?.username}! Ready to continue your math journey?
+              </p>
+              <div className="hero-buttons">
+                <Link to="/dashboard" className="btn btn-primary">
+                  Go to Dashboard
+                </Link>
+                <Link to="/game-mode" className="btn btn-secondary">
+                  Play Now
+                </Link>
+              </div>
+            </>
+          ) : (
+            // Content for guests
+            <>
+              <p className="hero-subtitle">
+                Solve puzzles, earn rewards, and master math skills in a fun
+                learning journey!
+              </p>
+              <div className="hero-buttons">
+                <Link to="/signup" className="btn btn-primary">
+                  Start Your Adventure
+                </Link>
+                <Link to="/signin" className="btn btn-secondary">
+                  Already Playing? Sign In
+                </Link>
+              </div>
+            </>
+          )}
         </div>
         <div className="hero-image">
           <div className="math-icon math-icon-1">+</div>
@@ -67,15 +92,32 @@ const Home = () => {
           </div>
         </div>
       </section>
+      
       <section className="cta-section">
         <div className="cta-content">
-          <h2>Ready to Make Math Fun?</h2>
-          <p>
-            Join thousands of kids who love learning math with Math Adventure!
-          </p>
-          <Link to="/signup" className="btn btn-primary">
-            Start Playing Now
-          </Link>
+          {isAuthenticated ? (
+            // CTA for logged-in users
+            <>
+              <h2>Ready to Continue Your Adventure?</h2>
+              <p>
+                You've already started your math journey! Jump back in and keep improving your skills.
+              </p>
+              <Link to="/game-mode" className="btn btn-primary">
+                Play Now
+              </Link>
+            </>
+          ) : (
+            // CTA for guests
+            <>
+              <h2>Ready to Make Math Fun?</h2>
+              <p>
+                Join thousands of kids who love learning math with Math Adventure!
+              </p>
+              <Link to="/signup" className="btn btn-primary">
+                Start Playing Now
+              </Link>
+            </>
+          )}
         </div>
       </section>
     </div>
