@@ -103,7 +103,9 @@ const Game = () => {
           problemsUrl = `http://localhost:5000/api/game/practice${typesParam ? `?problemTypes=${typesParam}` : ''}`;
           setIsPracticeMode(true);
         } else {
-          problemsUrl = `http://localhost:5000/api/game/problems?mode=${gameMode}`;
+          // Add levelId to the URL parameters if available
+          const levelId = searchParams.get('levelId');
+          problemsUrl = `http://localhost:5000/api/game/problems?mode=${gameMode}${levelId ? `&levelId=${levelId}` : ''}`;
         }
         
         console.log('Fetching problems from:', problemsUrl);
@@ -158,7 +160,7 @@ const Game = () => {
         clearInterval(timerRef.current);
       }
     };
-  }, [gameMode, problemTypes]); // Only these dependencies, not 'session' or 'problems'
+  }, [gameMode, problemTypes, searchParams]); // Added searchParams to dependencies
   
   // Timer function
   const startTimer = () => {

@@ -33,7 +33,7 @@ const gameController = {
       const levelId = req.query.levelId;
   
       // Fetch user's total points
-      const userProgressQuery = 'SELECT total_points FROM user_progress WHERE user_id = $1';
+      const userProgressQuery = 'SELECT total_points, current_level FROM user_progress WHERE user_id = $1';
       const userProgressResult = await pool.query(userProgressQuery, [userId]);
       
       if (userProgressResult.rows.length === 0) {
@@ -41,7 +41,81 @@ const gameController = {
       }
       
       const totalPoints = userProgressResult.rows[0].total_points;
-  
+      const currentUserLevel = userProgressResult.rows[0].current_level;
+      
+      // Special handling for timed and blitz modes - fetch mixed problems
+      if (mode === 'timed' || mode === 'blitz') {
+        // Determine maximum difficulty based on user's current level
+        const maxDifficulty = Math.min(currentUserLevel, 3);
+        
+        // Get an assortment of problems from different categories
+        const categories = ['Addition', 'Subtraction', 'Multiplication', 'Division', 'Fractions'];
+        
+        // For each category, we'll try to get one problem if possible
+        let allProblems = [];
+        
+        for (const category of categories) {
+          const categoryQuery = `
+            SELECT problem_id, category, difficulty_level, problem_type, question, options, points, correct_answer
+            FROM problems
+            WHERE 
+              category = $1 AND
+              difficulty_level <= $2
+            ORDER BY RANDOM()
+            LIMIT 1
+          `;
+          
+          const categoryResult = await pool.query(categoryQuery, [category, maxDifficulty]);
+          if (categoryResult.rows.length > 0) {
+            allProblems.push(categoryResult.rows[0]);
+          }
+        }
+        
+        // If we don't have 5 problems yet, get random problems to fill in
+        if (allProblems.length < 5) {
+          const remainingQuery = `
+            SELECT problem_id, category, difficulty_level, problem_type, question, options, points, correct_answer
+            FROM problems
+            WHERE 
+              difficulty_level <= $1 AND
+              problem_id NOT IN (${allProblems.map(p => p.problem_id).join(',') || '0'})
+            ORDER BY RANDOM()
+            LIMIT ${5 - allProblems.length}
+          `;
+          
+          const remainingResult = await pool.query(remainingQuery, [maxDifficulty]);
+          allProblems = [...allProblems, ...remainingResult.rows];
+        }
+        
+        // For blitz mode, we'll want more problems (at least 20) so the game can continue
+        if (mode === 'blitz') {
+          const blitzExtraQuery = `
+            SELECT problem_id, category, difficulty_level, problem_type, question, options, points, correct_answer
+            FROM problems
+            WHERE 
+              difficulty_level <= $1 AND
+              problem_id NOT IN (${allProblems.map(p => p.problem_id).join(',') || '0'})
+            ORDER BY RANDOM()
+            LIMIT 15
+          `;
+          
+          const blitzExtraResult = await pool.query(blitzExtraQuery, [maxDifficulty]);
+          allProblems = [...allProblems, ...blitzExtraResult.rows];
+        }
+        
+        return res.json({
+          currentLevel: currentUserLevel,
+          levelInfo: { 
+            level_name: mode === 'timed' ? 'Timed Challenge' : 'Blitz Challenge', 
+            description: mode === 'timed' 
+              ? 'Solve problems quickly for bonus points!' 
+              : 'Solve as many problems as you can in 60 seconds!',
+            category: 'Mixed'
+          },
+          problems: allProblems
+        });
+      }
+      
       // Handling All Types mode
       if (mode === 'all-types') {
         const currentLevel = Math.min(Math.floor(totalPoints / 100) + 1, 3); // Derive current level from points
@@ -69,8 +143,7 @@ const gameController = {
         });
       }
   
-      // Existing logic for other modes remains the same
-      // If no specific level is selected, find the highest unlocked level
+      // Normal mode - If no specific level is selected, find the highest unlocked level
       let selectedLevelId;
       if (!levelId) {
         // Find the highest level the user has unlocked based on their points
@@ -88,7 +161,8 @@ const gameController = {
           ? unlockedLevelResult.rows[0].level_id 
           : 1; // Default to first level (Addition Beginner)
       } else {
-        selectedLevelId = levelId;
+        selectedLevelId = parseInt(levelId, 10);
+        console.log(`Selected specific level ID: ${selectedLevelId}`);
       }
   
       // Fetch the specific level details
@@ -121,6 +195,8 @@ const gameController = {
         LIMIT 5
       `;
       
+      console.log(`Fetching problems for category: ${levelInfo.category}, difficulty: ${levelInfo.max_difficulty}`);
+      
       const problemsResult = await pool.query(problemsQuery, [
         levelInfo.category, 
         levelInfo.max_difficulty
@@ -133,8 +209,9 @@ const gameController = {
           FROM problems
           WHERE 
             category = $1 AND
-            difficulty_level <= $2
-          ORDER BY RANDOM()
+            difficulty_level <= $2 AND
+            problem_id NOT IN (${problemsResult.rows.map(p => p.problem_id).join(',') || '0'})
+          ORDER BY difficulty_level DESC, RANDOM()
           LIMIT ${5 - problemsResult.rows.length}
         `;
         
@@ -148,7 +225,7 @@ const gameController = {
       
       // Find next level (if exists)
       const nextLevelQuery = `
-        SELECT level_id, level_name 
+        SELECT level_id, level_name, required_points 
         FROM levels 
         WHERE required_points > $1 
         ORDER BY required_points 
