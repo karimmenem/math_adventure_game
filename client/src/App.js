@@ -16,6 +16,7 @@ import GameModeSelect from "./pages/GameModeSelect";
 import NormalModeLevelSelect from "./pages/NormalModeLevelSelect"; // New import
 import Achievements from "./pages/Achievements";
 import Profile from "./pages/Profile";
+import AboutMe from "./pages/AboutMe"; // Import the AboutMe component
 import soundService from "./services/soundService";
 import "./App.css";
 
@@ -41,6 +42,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/signin" element={<SignIn />} />
+              <Route path="/about" element={<AboutMe />} /> {/* New route for AboutMe page */}
               <Route
                 path="/dashboard"
                 element={

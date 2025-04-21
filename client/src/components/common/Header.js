@@ -13,8 +13,8 @@ const Header = () => {
   };
 
   // Default avatar path
-  // Default avatar path
-const avatarPath = user?.avatar ? `/avatars/${user.avatar}.png` : '/avatars/default.png';
+  const avatarPath = user?.avatar ? `/avatars/${user.avatar}.png` : '/avatars/default.png';
+  
   return (
     <header className="app-header">
       <div className="header-container">
@@ -32,6 +32,7 @@ const avatarPath = user?.avatar ? `/avatars/${user.avatar}.png` : '/avatars/defa
             <nav className="nav-menu">
               <Link to="/dashboard" className="nav-link">Dashboard</Link>
               <Link to="/achievements" className="nav-link">Achievements</Link>
+              <Link to="/about" className="nav-link">About Me</Link>
               <Link to="/profile" className="nav-link profile-link">
                 <span className="profile-username" style={{ color: user?.usernameColor || '#4CAF50' }}>
                   {user?.username}
@@ -50,6 +51,7 @@ const avatarPath = user?.avatar ? `/avatars/${user.avatar}.png` : '/avatars/defa
             </nav>
           ) : (
             <nav className="nav-menu">
+              <Link to="/about" className="nav-link">About Me</Link>
               <Link to="/signin" className="nav-link">Sign In</Link>
               <Link to="/signup" className="nav-button">Sign Up</Link>
             </nav>
