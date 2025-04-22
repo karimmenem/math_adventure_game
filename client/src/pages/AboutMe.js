@@ -16,13 +16,13 @@ const AboutMe = () => {
 
       <div className="about-content">
         <div className="about-photo-container">
-          {/* Replace with your own photo */}
+         
           <img 
             src="/images/karim.jpg" 
             alt="Developer Portrait" 
             className="about-photo"
             onError={(e) => {
-              e.target.src = '/avatars/avatar1.png'; // Fallback image
+              e.target.src = '/avatars/avatar1.png'; 
             }}
           />
           <div className="photo-frame"></div>
