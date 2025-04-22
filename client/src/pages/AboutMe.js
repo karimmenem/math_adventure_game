@@ -18,7 +18,7 @@ const AboutMe = () => {
         <div className="about-photo-container">
           {/* Replace with your own photo */}
           <img 
-            src="/images/developer-photo.jpg" 
+            src="/images/karim.jpg" 
             alt="Developer Portrait" 
             className="about-photo"
             onError={(e) => {
@@ -33,8 +33,8 @@ const AboutMe = () => {
             <h2>Who I Am</h2>
             <p>
               {/* FILL IN: Write a brief introduction about yourself */}
-              I'm [YOUR NAME], a passionate [YOUR PROFESSION/ROLE] with a love for education and technology. 
-              With [X YEARS] of experience in [YOUR FIELD], I've dedicated my career to making learning 
+              I'm Karim Menem, a passionate web developer with a love for education and technology. 
+              With 3 years of experience in Computer Science, I've dedicated my career to making learning 
               more engaging and accessible for everyone.
             </p>
           </section>
@@ -42,10 +42,10 @@ const AboutMe = () => {
           <section className="about-section">
             <h2>My Journey</h2>
             <p>
-              {/* FILL IN: Share your educational/professional journey */}
-              My adventure began at [YOUR UNIVERSITY/SCHOOL], where I earned a degree in [YOUR DEGREE]. 
-              After graduation, I [KEY MILESTONE IN YOUR CAREER]. Throughout my journey, I've 
-              [IMPORTANT ACHIEVEMENTS OR EXPERIENCES].
+              
+              My adventure began at the Lebanese American University, where I earned a degree in Computer Science. 
+              After graduation, I am looking to start a career in making kid education fun. Throughout my journey, I've 
+              learned many things, and met several individuals who share the love I have for web development.
             </p>
           </section>
 
@@ -54,9 +54,9 @@ const AboutMe = () => {
             <p>
               {/* FILL IN: Tell the story of why you created Math Adventure */}
               I created Math Adventure because I believe learning mathematics should be fun and engaging. 
-              The inspiration came from [YOUR INSPIRATION], and I wanted to build a platform that 
-              [YOUR VISION OR GOAL]. This project combines my passion for [RELEVANT PASSIONS] with 
-              my expertise in [RELEVANT SKILLS].
+              The inspiration came from W3S School, and I wanted to build a platform that 
+              makes learning fun for kids. This project combines my passion for fun learning with 
+              my expertise in web development.
             </p>
           </section>
 
@@ -64,8 +64,8 @@ const AboutMe = () => {
             <h2>Beyond Coding</h2>
             <p>
               {/* FILL IN: Share personal interests/hobbies */}
-              When I'm not working on Math Adventure, you can find me [YOUR HOBBIES/INTERESTS]. 
-              I'm also passionate about [OTHER PASSIONS] and enjoy [ACTIVITIES YOU ENJOY].
+              When I'm not working on Math Adventure, you can find me on X tweeting about football. 
+              I'm also passionate about trying new foods and enjoy visiting as many new restaurants as I can.
             </p>
           </section>
 
@@ -73,16 +73,16 @@ const AboutMe = () => {
             <h2>Connect With Me</h2>
             <div className="social-links">
               {/* FILL IN: Add your social media links */}
-              <a href="https://github.com/yourusername" target="_blank" rel="noopener noreferrer" className="social-link">
+              <a href="https://github.com/karimmenem" target="_blank" rel="noopener noreferrer" className="social-link">
                 <i className="fab fa-github"></i> GitHub
               </a>
-              <a href="https://linkedin.com/in/yourprofile" target="_blank" rel="noopener noreferrer" className="social-link">
+              <a href="https://www.linkedin.com/in/karim-menem-b49630290/?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app" target="_blank" rel="noopener noreferrer" className="social-link">
                 <i className="fab fa-linkedin"></i> LinkedIn
               </a>
-              <a href="https://twitter.com/yourhandle" target="_blank" rel="noopener noreferrer" className="social-link">
-                <i className="fab fa-twitter"></i> Twitter
+              <a href="https://x.com/karimmenem_" target="_blank" rel="noopener noreferrer" className="social-link">
+                <i className="fab fa-twitter"></i> X/Twitter
               </a>
-              <a href="mailto:your.email@example.com" className="social-link">
+              <a href="karimmenem2@gmail.com" className="social-link">
                 <i className="fas fa-envelope"></i> Email
               </a>
             </div>
