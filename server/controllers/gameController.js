@@ -435,79 +435,147 @@ const gameController = {
   },
   
   // End game session
-  async endGame(req, res) {
-    try {
-      const { sessionId, mode, blitzScore } = req.body;
-      const userId = req.user.userId;
+  // End game session
+async endGame(req, res) {
+  try {
+    const { sessionId, mode, blitzScore } = req.body;
+    const userId = req.user.userId;
+    
+    // For Blitz mode, handle the case where sessionId might be missing
+    if (mode === 'blitz' && blitzScore) {
+      // Even if sessionId is missing, we can still process the blitz score
       
-      // Update session with end time
-      await pool.query(
-        'UPDATE game_sessions SET ended_at = CURRENT_TIMESTAMP WHERE session_id = $1',
-        [sessionId]
-      );
+      // Check if we need to create high_scores table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS high_scores (
+          score_id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
+          game_mode VARCHAR(20) NOT NULL,
+          score INTEGER NOT NULL,
+          achieved_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
       
-      // Get session summary
-      const sessionQuery = `
-        SELECT problems_attempted, problems_correct, points_earned,
-               EXTRACT(EPOCH FROM (ended_at - started_at)) AS duration_seconds
-        FROM game_sessions
-        WHERE session_id = $1
+      // Get current high score for this user in blitz mode
+      const highScoreQuery = `
+        SELECT score FROM high_scores 
+        WHERE user_id = $1 AND game_mode = 'blitz'
+        ORDER BY score DESC
+        LIMIT 1
       `;
-      const sessionResult = await pool.query(sessionQuery, [sessionId]);
+      const highScoreResult = await pool.query(highScoreQuery, [userId]);
       
-      if (sessionResult.rows.length === 0) {
-        return res.status(404).json({ message: 'Session not found' });
-      }
-      
+      const currentHighScore = highScoreResult.rows.length > 0 ? highScoreResult.rows[0].score : 0;
       let isHighScore = false;
       
-      // For blitz mode, check if this is a new high score
-      if (mode === 'blitz' && blitzScore) {
-        // Check if we need to create high_scores table
+      // If this is a new high score, save it
+      if (blitzScore > currentHighScore) {
         await pool.query(`
-          CREATE TABLE IF NOT EXISTS high_scores (
-            score_id SERIAL PRIMARY KEY,
-            user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
-            game_mode VARCHAR(20) NOT NULL,
-            score INTEGER NOT NULL,
-            achieved_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-          )
-        `);
+          INSERT INTO high_scores (user_id, game_mode, score)
+          VALUES ($1, 'blitz', $2)
+        `, [userId, blitzScore]);
         
-        // Get current high score for this user in blitz mode
-        const highScoreQuery = `
-          SELECT score FROM high_scores 
-          WHERE user_id = $1 AND game_mode = 'blitz'
-          ORDER BY score DESC
-          LIMIT 1
-        `;
-        const highScoreResult = await pool.query(highScoreQuery, [userId]);
-        
-        const currentHighScore = highScoreResult.rows.length > 0 ? highScoreResult.rows[0].score : 0;
-        
-        // If this is a new high score, save it
-        if (blitzScore > currentHighScore) {
-          await pool.query(`
-            INSERT INTO high_scores (user_id, game_mode, score)
-            VALUES ($1, 'blitz', $2)
-          `, [userId, blitzScore]);
-          
-          isHighScore = true;
+        isHighScore = true;
+      }
+
+      // If we have a valid sessionId, try to update it
+      if (sessionId) {
+        try {
+          await pool.query(
+            'UPDATE game_sessions SET ended_at = CURRENT_TIMESTAMP WHERE session_id = $1',
+            [sessionId]
+          );
+        } catch (sessionError) {
+          console.log('Could not update session, but continuing with blitz score processing:', sessionError);
         }
       }
       
-      res.json({
-        message: 'Game session ended',
+      // Return blitz game summary without session data
+      return res.json({
+        message: 'Blitz game session ended',
         summary: {
-          ...sessionResult.rows[0],
+          problems_attempted: blitzScore, // In blitz, score is usually correct answers
+          problems_correct: blitzScore,
+          points_earned: blitzScore * 10, // Standard points per correct answer
+          duration_seconds: 60, // Standard duration for blitz mode
           isHighScore
         }
       });
-    } catch (error) {
-      console.error('End game error:', error);
-      res.status(500).json({ message: 'Server error when ending game' });
     }
+    
+    // For non-blitz modes or when sessionId is provided
+    if (!sessionId) {
+      return res.status(400).json({ message: 'No session ID provided' });
+    }
+    
+    // Update session with end time
+    await pool.query(
+      'UPDATE game_sessions SET ended_at = CURRENT_TIMESTAMP WHERE session_id = $1',
+      [sessionId]
+    );
+    
+    // Get session summary
+    const sessionQuery = `
+      SELECT problems_attempted, problems_correct, points_earned,
+             EXTRACT(EPOCH FROM (ended_at - started_at)) AS duration_seconds
+      FROM game_sessions
+      WHERE session_id = $1
+    `;
+    const sessionResult = await pool.query(sessionQuery, [sessionId]);
+    
+    if (sessionResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
+    
+    let isHighScore = false;
+    
+    // For blitz mode, check if this is a new high score
+    if (mode === 'blitz' && blitzScore) {
+      // Check if we need to create high_scores table
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS high_scores (
+          score_id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
+          game_mode VARCHAR(20) NOT NULL,
+          score INTEGER NOT NULL,
+          achieved_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      
+      // Get current high score for this user in blitz mode
+      const highScoreQuery = `
+        SELECT score FROM high_scores 
+        WHERE user_id = $1 AND game_mode = 'blitz'
+        ORDER BY score DESC
+        LIMIT 1
+      `;
+      const highScoreResult = await pool.query(highScoreQuery, [userId]);
+      
+      const currentHighScore = highScoreResult.rows.length > 0 ? highScoreResult.rows[0].score : 0;
+      
+      // If this is a new high score, save it
+      if (blitzScore > currentHighScore) {
+        await pool.query(`
+          INSERT INTO high_scores (user_id, game_mode, score)
+          VALUES ($1, 'blitz', $2)
+        `, [userId, blitzScore]);
+        
+        isHighScore = true;
+      }
+    }
+    
+    res.json({
+      message: 'Game session ended',
+      summary: {
+        ...sessionResult.rows[0],
+        isHighScore
+      }
+    });
+  } catch (error) {
+    console.error('End game error:', error);
+    res.status(500).json({ message: 'Server error when ending game' });
   }
+}
 };
 
 module.exports = gameController;

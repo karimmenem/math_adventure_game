@@ -42,12 +42,12 @@ const authController = {
     }
   },
 
-  // Login user
+  
   async login(req, res) {
     try {
       const { username, password } = req.body;
       
-      // Validate input
+      
       if (!username || !password) {
         return res.status(400).json({ message: 'Username and password are required' });
       }
