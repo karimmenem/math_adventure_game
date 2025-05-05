@@ -12,7 +12,6 @@ const SignIn = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
-
   const { username, password } = formData;
 
   const onChange = e => {

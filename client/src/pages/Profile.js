@@ -21,10 +21,10 @@ const Profile = () => {
     { id: "avatar6", src: "/avatars/avatar6.png", alt: "Alien" },
   ];
 
-  // Color options for username
+  
   // Color options for username
   const colorOptions = [
-    { name: "White", value: "#FFFFFF" }, // Added white instead of green
+    { name: "White", value: "#FFFFFF" }, 
     { name: "Blue", value: "#2196F3" },
     { name: "Purple", value: "#9C27B0" },
     { name: "Orange", value: "#FF9800" },
