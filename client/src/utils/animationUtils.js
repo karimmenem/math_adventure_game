@@ -175,7 +175,7 @@ const animationUtils = {
     }
   },
   
-  // Create character reaction
+  
   // Create character reaction - Updated position to left side
 showCharacterReaction: (reaction) => {
   let character = document.getElementById('game-character');
