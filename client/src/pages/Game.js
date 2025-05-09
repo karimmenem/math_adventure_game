@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import soundService from "../services/soundService";
 import animationUtils from "../utils/animationUtils";
+import config from "../config"; // Import the config file
 
 const Game = () => {
   const { user } = useContext(AuthContext);
@@ -79,7 +80,7 @@ const Game = () => {
 
         // Start a new game session
         const sessionResponse = await fetch(
-          "http://localhost:5000/api/game/start",
+          `${config.API_URL}/api/game/start`,
           {
             method: "POST",
             headers: {
@@ -106,14 +107,14 @@ const Game = () => {
           // Use empty string for no problem types instead of trying to join an empty array
           const typesParam =
             problemTypes.length > 0 ? problemTypes.join(",") : "";
-          problemsUrl = `http://localhost:5000/api/game/practice${
+            problemsUrl = `${config.API_URL}/api/game/practice${
             typesParam ? `?problemTypes=${typesParam}` : ""
           }`;
           setIsPracticeMode(true);
         } else {
           // Add levelId to the URL parameters if available
           const levelId = searchParams.get("levelId");
-          problemsUrl = `http://localhost:5000/api/game/problems?mode=${gameMode}${
+          problemsUrl = `${config.API_URL}/api/game/problems?mode=${gameMode}${
             levelId ? `&levelId=${levelId}` : ""
           }`;
         }
@@ -221,7 +222,7 @@ const Game = () => {
       const token = localStorage.getItem("token");
 
       // For blitz mode, we'll always include the blitzScore
-      const response = await fetch("http://localhost:5000/api/game/end", {
+      const response = await fetch(`${config.API_URL}/api/game/end`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -382,7 +383,7 @@ const Game = () => {
       // Try to end the game session in the background, but don't block UI
       const token = localStorage.getItem("token");
       if (token && session?.session_id) {
-        fetch("http://localhost:5000/api/game/end", {
+        fetch(`${config.API_URL}/api/game/end`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -545,7 +546,7 @@ const Game = () => {
       console.log("Submitting answer with session:", session);
       console.log("Current problem:", currentProblem);
 
-      const response = await fetch("http://localhost:5000/api/game/submit", {
+      const response = await fetch(`${config.API_URL}/api/game/submit`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -661,7 +662,7 @@ const Game = () => {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        "http://localhost:5000/api/achievements/check",
+        `${config.API_URL}/api/achievements/check`,
         {
           method: "POST",
           headers: {
@@ -729,7 +730,7 @@ const Game = () => {
 
       const token = localStorage.getItem("token");
 
-      const response = await fetch("http://localhost:5000/api/game/end", {
+      const response = await fetch(`${config.API_URL}/api/game/end`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

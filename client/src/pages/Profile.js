@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import soundService from "../services/soundService";
+import config from "../config"; // Import the config file
 
 const Profile = () => {
   const { user, updateUser } = useContext(AuthContext);
@@ -46,7 +47,7 @@ const Profile = () => {
         }
 
         const response = await fetch(
-          "http://localhost:5000/api/users/profile",
+          `${config.API_URL}/api/users/profile`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -96,7 +97,7 @@ const Profile = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch("http://localhost:5000/api/users/profile", {
+      const response = await fetch(`${config.API_URL}/api/users/profile`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

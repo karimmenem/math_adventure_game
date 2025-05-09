@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ProblemTypeFilter from "../components/ProblemTypeFilter";
 import soundService from "../services/soundService";
+import config from "../config"; // Import the config file
 
 const GameModeSelect = () => {
   const navigate = useNavigate();

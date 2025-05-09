@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import soundService from '../services/soundService';
 import { AuthContext } from '../context/AuthContext'; // Import AuthContext
+import config from '../config'; // Import the config file
 
 const NormalModeLevelSelect = () => {
   const navigate = useNavigate();
@@ -30,12 +31,12 @@ const NormalModeLevelSelect = () => {
         
         // Fetch available levels and user progress
         const [levelsResponse, progressResponse] = await Promise.all([
-          fetch('http://localhost:5000/api/users/levels', {
+          fetch(`${config.API_URL}/api/users/levels`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
           }),
-          fetch('http://localhost:5000/api/users/progress', {
+          fetch(`${config.API_URL}/api/users/progress`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }

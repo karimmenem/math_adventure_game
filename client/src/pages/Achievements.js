@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import soundService from '../services/soundService';
 import animationUtils from '../utils/animationUtils';
+import config from '../config';
 
 const Achievements = () => {
   const [userAchievements, setUserAchievements] = useState([]);
@@ -17,7 +18,7 @@ const Achievements = () => {
         const token = localStorage.getItem('token');
         
         // Fetch all achievements
-        const allResponse = await fetch('http://localhost:5000/api/achievements/all', {
+        const allResponse = await fetch(`${config.API_URL}/api/achievements/all`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -28,7 +29,7 @@ const Achievements = () => {
         }
         
         // Fetch user's earned achievements
-        const userResponse = await fetch('http://localhost:5000/api/achievements/user', {
+        const userResponse = await fetch(`${config.API_URL}/api/achievements/user`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

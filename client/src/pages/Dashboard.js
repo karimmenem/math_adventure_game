@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import soundService from '../services/soundService';
 import animationUtils from '../utils/animationUtils';
+import config from '../config';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -29,7 +30,7 @@ const Dashboard = () => {
         }
 
         // Fetch user progress
-        const progressResponse = await fetch('http://localhost:5000/api/users/progress', {
+        const progressResponse = await fetch(`${config.API_URL}/api/users/progress`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -47,7 +48,7 @@ const Dashboard = () => {
         
         // Fetch high scores if available
         try {
-          const highScoresResponse = await fetch('http://localhost:5000/api/users/high-scores', {
+          const highScoresResponse = await fetch(`${config.API_URL}/api/users/high-scores`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }

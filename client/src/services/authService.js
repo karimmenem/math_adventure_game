@@ -1,11 +1,10 @@
-// Use environment variables for API URL with a fallback for local development
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import config from '../config';
 
 const authService = {
   // Register user
   async register(userData) {
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
+      const response = await fetch(`${config.API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,7 +34,7 @@ const authService = {
   // Login user
   async login(credentials) {
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch(`${config.API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
