@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const pool = require('./config/db');
+const initializeDatabase = require('./initDb'); // Add this line
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const gameRoutes = require('./routes/gameRoutes');
@@ -32,6 +33,16 @@ app.use('/api/users', userRoutes);
 app.use('/api/game', gameRoutes);
 app.use('/api/achievements', achievementRoutes);
 app.use('/api/users/profile', profileRoutes);
+
+// Initialize database before starting the server
+(async () => {
+  try {
+    await initializeDatabase();
+    console.log('Database initialization completed');
+  } catch (err) {
+    console.error('Database initialization error:', err);
+  }
+})();
 
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
