@@ -13,7 +13,7 @@ const achievementRoutes = require('./routes/achievementRoutes');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001; // Changed from 5000 to 5001
 
 // Updated CORS configuration
 const isProduction = process.env.NODE_ENV === 'production';
