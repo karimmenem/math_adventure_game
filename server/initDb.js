@@ -4,6 +4,11 @@ const pool = require('./config/db');
 
 const initializeDatabase = async () => {
   try {
+    // Check if database initialization is disabled via environment variable
+    if (process.env.DISABLE_DB_INIT === 'true') {
+      console.log('Database initialization disabled via DISABLE_DB_INIT environment variable');
+      return;
+    }
     // First check if the database is already initialized by checking if users table exists
     try {
       const checkResult = await pool.query('SELECT COUNT(*) FROM users');
